@@ -25,7 +25,6 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.stores.bson.BSONParser;
 
-import com.fasterxml.jackson.databind.InjectableValues;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.mongodb.BasicDBObject;
@@ -36,15 +35,15 @@ import com.mongodb.MongoException;
 
 public class MongoStore<D extends MongoDocument> implements Store<D> {
 
-    private final InjectableValues injectables;
     private final DBCollection collection;
     private final BSONObjectMapper mapper;
+    private final Injector injector;
     private final Class<D> type;
 
     @Inject
     public MongoStore(BSONObjectMapper mapper, Injector injector, DBCollection collection, Class<D> type) {
-        this.injectables = new InjectableValues.Std().addValue(MongoStore.class, this);
         this.collection = collection;
+        this.injector = injector;
         this.mapper = mapper;
         this.type = type;
 
@@ -70,8 +69,8 @@ public class MongoStore<D extends MongoDocument> implements Store<D> {
     }
 
     @Override
-    public D get(ObjectId id) {
-        return convert(collection.findOne(id));
+    public D get(UUID uuid) {
+        return convert(collection.findOne(new BasicDBObject("uuid", uuid)));
     }
 
     @Override
@@ -118,7 +117,9 @@ public class MongoStore<D extends MongoDocument> implements Store<D> {
         if (object == null) return null;
 
         try {
-            return mapper.reader(injectables).readValue(new BSONParser(mapper, object), type);
+            final D document = mapper.readValue(new BSONParser(mapper, object), type);
+            injector.injectMembers(document);
+            return document;
         } catch (IOException exception) {
             throw new MongoException("Exception mapping BSON to " + type.getName(), exception);
         }

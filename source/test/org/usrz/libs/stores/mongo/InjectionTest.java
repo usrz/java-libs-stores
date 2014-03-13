@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.mongodb;
+package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,7 +36,7 @@ import com.google.inject.TypeLiteral;
 
 public class InjectionTest extends AbstractTest {
 
-    @Test
+    @Test(groups="local")
     public void testInjection()
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));

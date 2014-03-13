@@ -20,17 +20,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.bson.types.ObjectId;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.Store;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class MongoDocument implements Document {
 
-    private AtomicReference<ObjectId> objectId;
-    private AtomicReference<Store<?>> store;
-    private AtomicReference<UUID> uuid;
+    private final AtomicReference<ObjectId> objectId = new AtomicReference<>();
+    //private final AtomicReference<Store<?>> store = new AtomicReference<>();
+    private final AtomicReference<UUID> uuid = new AtomicReference<>();
 
     protected MongoDocument() {
         /* Simply await for injection */
@@ -52,12 +49,12 @@ public class MongoDocument implements Document {
         throw new IllegalStateException("Object ID already set");
     }
 
-    @JacksonInject
-    private void setStore(MongoStore<?> store) {
-        if (store == null) throw new NullPointerException("Null Store");
-        if (this.store.compareAndSet(null, store)) return;
-        throw new IllegalStateException("Store already set");
-    }
+//    @JacksonInject
+//    private void setStore(MongoStore<?> store) {
+//        if (store == null) throw new NullPointerException("Null Store");
+//        if (this.store.compareAndSet(null, store)) return;
+//        throw new IllegalStateException("Store already set");
+//    }
 
     /* ====================================================================== */
 
@@ -76,11 +73,11 @@ public class MongoDocument implements Document {
         return objectId;
     }
 
-    @JsonIgnore
-    protected final Store<?> getStore() {
-        final Store<?> store = this.store.get();
-        if (store == null) throw new IllegalStateException("Store not set");
-        return store;
-    }
+//    @JsonIgnore
+//    protected final Store<?> getStore() {
+//        final Store<?> store = this.store.get();
+//        if (store == null) throw new IllegalStateException("Store not set");
+//        return store;
+//    }
 
 }

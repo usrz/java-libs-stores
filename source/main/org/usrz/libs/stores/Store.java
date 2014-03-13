@@ -15,7 +15,7 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import org.bson.types.ObjectId;
+import java.util.UUID;
 
 public interface Store<D extends Document> {
 
@@ -25,7 +25,7 @@ public interface Store<D extends Document> {
 
     public D create();
 
-    public D get(ObjectId id);
+    public D get(UUID uuid);
 
     public void put(D object);
 
