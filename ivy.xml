@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="2.0">
 
-  <info organisation="org.usrz.libs" module="mongodb" revision="0.0.0"/>
+  <info organisation="org.usrz.libs" module="stores" revision="0.0.0"/>
 
   <configurations>
     <conf name="default" visibility="public"/>
@@ -10,13 +10,18 @@
   </configurations>
 
   <publications>
-      <artifact name="mongodb" type="bin" ext="jar" conf="default"/>
-      <artifact name="mongodb" type="src" ext="zip" conf="default"/>
-      <artifact name="mongodb" type="doc" ext="zip" conf="default"/>
+      <artifact name="stores" type="bin" ext="jar" conf="default"/>
+      <artifact name="stores" type="src" ext="zip" conf="default"/>
+      <artifact name="stores" type="doc" ext="zip" conf="default"/>
   </publications>
 
   <dependencies>
-    <dependency org="org.usrz.libs" name="testing" rev="latest.release" conf="testing-&gt;logging"/>
+    <dependency org="com.google"    name="guice"            rev="latest.release" conf="default"/>
+    <dependency org="com.fasterxml" name="jackson-databind" rev="latest.release" conf="default"/>
+    <dependency org="org.mongodb"   name="driver"           rev="latest.release" conf="default"/>
+    <dependency org="org.usrz.libs" name="logging"          rev="latest.release" conf="default"/>
+    <dependency org="org.usrz.libs" name="utils"            rev="latest.release" conf="default-&gt;beans,configurations"/>
+    <dependency org="org.usrz.libs" name="testing"          rev="latest.release" conf="testing-&gt;logging"/>
   </dependencies>
 
 </ivy-module>
