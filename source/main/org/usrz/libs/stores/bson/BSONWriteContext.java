@@ -101,7 +101,6 @@ public abstract class BSONWriteContext extends JsonStreamContext {
         }
 
         protected abstract void writeObject(Object object);
-
     }
 
     /* ====================================================================== */
@@ -169,8 +168,8 @@ public abstract class BSONWriteContext extends JsonStreamContext {
 
         @Override
         public void writeName(String name) {
-            if (this._name != null) throw new IllegalStateException("Name already set to \"" + this._name + "\"");
-            this._name = name;
+            if (_name != null) throw new IllegalStateException("Name already set to \"" + _name + "\"");
+            _name = name;
         }
 
         @Override
