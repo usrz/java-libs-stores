@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MongoDocument implements Document {
 
     private final AtomicReference<ObjectId> objectId = new AtomicReference<>();
-    //private final AtomicReference<Store<?>> store = new AtomicReference<>();
     private final AtomicReference<UUID> uuid = new AtomicReference<>();
 
     protected MongoDocument() {
@@ -49,13 +48,6 @@ public class MongoDocument implements Document {
         throw new IllegalStateException("Object ID already set");
     }
 
-//    @JacksonInject
-//    private void setStore(MongoStore<?> store) {
-//        if (store == null) throw new NullPointerException("Null Store");
-//        if (this.store.compareAndSet(null, store)) return;
-//        throw new IllegalStateException("Store already set");
-//    }
-
     /* ====================================================================== */
 
     @Override
@@ -72,12 +64,5 @@ public class MongoDocument implements Document {
         if (objectId == null) throw new IllegalStateException("Object ID not set");
         return objectId;
     }
-
-//    @JsonIgnore
-//    protected final Store<?> getStore() {
-//        final Store<?> store = this.store.get();
-//        if (store == null) throw new IllegalStateException("Store not set");
-//        return store;
-//    }
 
 }
