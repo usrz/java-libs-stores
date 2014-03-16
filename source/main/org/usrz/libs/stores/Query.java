@@ -16,7 +16,6 @@
 package org.usrz.libs.stores;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import com.mongodb.BasicDBList;
@@ -36,7 +35,7 @@ public abstract class Query<D extends Document> {
         return new Operator(key);
     }
 
-    public abstract Iterator<D> results();
+    public abstract DocumentIterator<D> results();
 
     public abstract D first();
 

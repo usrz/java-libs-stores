@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores;
+package org.usrz.libs.stores.mongo;
 
 import java.util.UUID;
 
-public interface Store<D extends Document> {
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    public String getName();
+public abstract class MongoDocumentMixIn {
 
-    public Class<D> getType();
+    private MongoDocumentMixIn() {
+        throw new IllegalStateException();
+    }
 
-    public D create();
+    @JsonProperty("__id")
+    abstract void setUUID(UUID uuid);
 
-    public D find(UUID uuid);
-
-    public D store(D object);
-
-    public Query<D> query();
-
-    public Query<D>.Operator query(String field);
+    @JsonProperty("__id")
+    abstract UUID getUUID();
 
 }

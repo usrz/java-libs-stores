@@ -15,22 +15,20 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
+import java.util.Iterator;
 import java.util.UUID;
 
-public interface Store<D extends Document> {
+public abstract class DocumentIterator<D extends Document>
+implements Iterator<D> {
 
-    public String getName();
+    public UUID nextUUID() {
+        return next().getUUID();
+    }
 
-    public Class<D> getType();
-
-    public D create();
-
-    public D find(UUID uuid);
-
-    public D store(D object);
-
-    public Query<D> query();
-
-    public Query<D>.Operator query(String field);
+    @Override
+    public void remove()
+    throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
 
 }

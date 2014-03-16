@@ -16,16 +16,13 @@
 package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.UUID;
 
-import org.bson.types.ObjectId;
+import org.usrz.libs.stores.DocumentIterator;
 import org.usrz.libs.stores.Query;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
-import org.usrz.libs.stores.bson.BSONParser;
 
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -40,14 +37,12 @@ public class MongoStore<D extends MongoDocument> implements Store<D> {
     private final Injector injector;
     private final Class<D> type;
 
-    @Inject
-    public MongoStore(BSONObjectMapper mapper, Injector injector, DBCollection collection, Class<D> type) {
+    protected MongoStore(BSONObjectMapper mapper, Injector injector, DBCollection collection, Class<D> type) {
         this.collection = collection;
         this.injector = injector;
         this.mapper = mapper;
         this.type = type;
-
-        collection.ensureIndex(new BasicDBObject("uuid", 1), "_uuid_", true);
+        mapper.addMixInAnnotations(type, MongoDocumentMixIn.class);
     }
 
     @Override
@@ -63,20 +58,20 @@ public class MongoStore<D extends MongoDocument> implements Store<D> {
     @Override
     public D create() {
         final BasicDBObject object = new BasicDBObject();
-        object.put("_id", new ObjectId());
-        object.put("uuid", UUID.randomUUID());
+        object.put("_id", UUID.randomUUID());
         return convert(object);
     }
 
     @Override
-    public D get(UUID uuid) {
-        return convert(collection.findOne(new BasicDBObject("uuid", uuid)));
+    public D find(UUID uuid) {
+        return convert(collection.findOne(new BasicDBObject("_id", uuid)));
     }
 
     @Override
-    public void put(D object) {
+    public D store(D object) {
         try {
             collection.save(mapper.writeValueAsBson(object));
+            return object;
         } catch (IOException exception) {
             throw new MongoException("Exception mapping " + type.getName() + " to BSON", exception);
         }
@@ -89,17 +84,24 @@ public class MongoStore<D extends MongoDocument> implements Store<D> {
         return new Query<D>() {
 
             @Override
-            public Iterator<D> results() {
+            public DocumentIterator<D> results() {
+                /* Normalize alias "uuid" -> "_id" */
+                if (query.containsKey((Object)"uuid")) {
+                    query.put("_id", query.remove("uuid"));
+                }
                 final DBCursor cursor = collection.find(query);
-                return new Iterator<D>() {
+                return new DocumentIterator<D>() {
                     @Override public boolean hasNext() { return cursor.hasNext(); }
                     @Override public D next() { return convert(cursor.next()); }
-                    @Override public void remove() { throw new UnsupportedOperationException(); }
                 };
             }
 
             @Override
             public D first() {
+                /* Normalize alias "uuid" -> "_id" */
+                if (query.containsKey((Object)"uuid")) {
+                    query.put("_id", query.remove("uuid"));
+                }
                 return convert(collection.findOne(query));
             }
 
@@ -117,7 +119,7 @@ public class MongoStore<D extends MongoDocument> implements Store<D> {
         if (object == null) return null;
 
         try {
-            final D document = mapper.readValue(new BSONParser(mapper, object), type);
+            final D document = mapper.readValue(object, type);
             injector.injectMembers(document);
             return document;
         } catch (IOException exception) {

@@ -15,17 +15,17 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import static java.lang.Integer.toHexString;
+
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.bson.types.ObjectId;
 import org.usrz.libs.stores.Document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class MongoDocument implements Document {
 
-    private final AtomicReference<ObjectId> objectId = new AtomicReference<>();
     private final AtomicReference<UUID> uuid = new AtomicReference<>();
 
     protected MongoDocument() {
@@ -35,17 +35,10 @@ public class MongoDocument implements Document {
     /* ====================================================================== */
 
     @JsonProperty("uuid")
-    private void setUUID(UUID uuid) {
+    private final void setUUID(UUID uuid) {
         if (uuid == null) throw new NullPointerException("Null UUID");
         if (this.uuid.compareAndSet(null, uuid)) return;
         throw new IllegalStateException("UUID already set");
-    }
-
-    @JsonProperty("_id")
-    private void setObjectId(ObjectId objectId) {
-        if (objectId == null) throw new NullPointerException("Null Object ID");
-        if (this.objectId.compareAndSet(null, objectId)) return;
-        throw new IllegalStateException("Object ID already set");
     }
 
     /* ====================================================================== */
@@ -58,11 +51,28 @@ public class MongoDocument implements Document {
         return uuid;
     }
 
-    @JsonProperty("_id")
-    protected final ObjectId getObjectId() {
-        final ObjectId objectId = this.objectId.get();
-        if (objectId == null) throw new IllegalStateException("Object ID not set");
-        return objectId;
+    /* ====================================================================== */
+
+    @Override
+    public String toString() {
+        return getClass().getName() + "[" + getUUID() + "]@" + toHexString(hashCode());
     }
 
+    @Override
+    public int hashCode() {
+        return getClass().hashCode() ^ getUUID().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (object == this) return true;
+        try {
+            final MongoDocument document = (MongoDocument) object;
+            return document.getClass().equals(getClass())
+                && document.getUUID().equals(getUUID());
+        } catch (ClassCastException exception) {
+            return false;
+        }
+    }
 }
