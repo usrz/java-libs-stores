@@ -15,39 +15,45 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
-import java.io.IOException;
-
+import org.usrz.libs.logging.Log;
 import org.usrz.libs.utils.configurations.Configurations;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.ProvisionException;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 
 public class MongoDatabaseProvider implements Provider<DB> {
 
-    private DB database = null;
+    private static final Log log = new Log();
+
+    private String host;
+    private int port;
+    private String db;
 
     public MongoDatabaseProvider() {
         /* Nothing to do */
     }
 
     @Inject
-    public void setConfigurations(Configurations configurations)
-    throws IOException {
+    public void setConfigurations(Configurations configurations) {
         final Configurations mongo = configurations.strip("mongo");
-        final String host = mongo.get("host", "localhost");
-        final int port = mongo.get("port", 27017);
-        final String db = mongo.get("database");
+        host = mongo.get("host", "localhost");
+        port = mongo.get("port", 27017);
+        db = mongo.get("database");
         if (db == null) throw new IllegalStateException("Missing mongo.db configuration");
-        final MongoClient client = new MongoClient(host, port);
-        database = client.getDB(db);
     }
 
     @Override
     public DB get() {
-        if (database == null) throw new IllegalStateException("Missing DB, not injected?");
-        return database;
+        if (db == null) throw new ProvisionException(this.getClass().getSimpleName() + " not injected");
+        log.info("Creating new MongoDB client for host: %s, port: %d, database: %s", host, port, db);
+        try {
+            return new MongoClient(host, port).getDB(db);
+        } catch (Exception exception) {
+            throw new ProvisionException("Unable to create MongoDB client", exception);
+        }
     }
 
 }

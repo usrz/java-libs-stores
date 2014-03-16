@@ -20,6 +20,7 @@ import java.lang.reflect.ParameterizedType;
 import javassist.ClassPool;
 
 import org.usrz.libs.stores.Document;
+import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.beans.BeanBuilder;
@@ -42,10 +43,10 @@ public abstract class MongoDatabaseModule implements Module {
     @Override
     public final void configure(Binder binder) {
         binder.bind(ClassPool.class).toInstance(ClassPool.getDefault());
-        binder.bind(BeanBuilder.class);
-        binder.bind(MapperBuilder.class);
+        binder.bind(BeanBuilder.class).asEagerSingleton();;
+        binder.bind(MapperBuilder.class).asEagerSingleton();;
 
-        binder.bind(DB.class).toProvider(MongoDatabaseProvider.class);
+        binder.bind(DB.class).toProvider(MongoDatabaseProvider.class).asEagerSingleton();;
         binder.bind(BSONObjectMapper.class).asEagerSingleton();
 
         try {
@@ -62,12 +63,47 @@ public abstract class MongoDatabaseModule implements Module {
         return new CollectionBindingBuilder<D>(checkType(type));
     }
 
+    public <L extends Document, R extends Document> RelationBindingBuilder<L, R> join(Class<L> typeL, Class<R> typeR) {
+        if (typeL == null) throw new NullPointerException("Null type L");
+        if (typeR == null) throw new NullPointerException("Null type R");
+        return new RelationBindingBuilder<L, R>(typeL, typeR);
+    }
+
     public <D extends Document> Class<D> checkType(Class<D> type) {
         if (type.isInterface()) return type;
         if (MongoDocument.class.isAssignableFrom(type)) return type;
         throw new IllegalArgumentException("Class " + type.getName() +
                                            " must be assignable from " +
                                            MongoDocument.class.getName());
+    }
+
+    /* ====================================================================== */
+
+    public class RelationBindingBuilder<L extends Document, R extends Document> {
+
+        private final TypeLiteral<Relation<L, R>> literal;
+        private final Class<L> typeL;
+        private final Class<R> typeR;
+
+        @SuppressWarnings("unchecked")
+        private RelationBindingBuilder(Class<L> typeL, Class<R> typeR) {
+            final ParameterizedType storeType = Types.newParameterizedType(Relation.class, typeL, typeR);
+            literal = (TypeLiteral<Relation<L, R>>) TypeLiteral.get(storeType);
+            this.typeL = typeL;
+            this.typeR = typeR;
+        }
+
+        public void toCollection(String collection) {
+            if (collection == null) throw new NullPointerException("Null collection");
+
+            /* Create our mongo store provider */
+            final MongoRelationProvider<L, R> provider = new MongoRelationProvider<>(collection, typeL, typeR);
+
+            /* Bind the provider and make sure it gets injected */
+            binder.get().bind(literal).toProvider(provider).asEagerSingleton();
+            binder.get().requestInjection(provider);
+        }
+
     }
 
     /* ====================================================================== */
@@ -84,33 +120,46 @@ public abstract class MongoDatabaseModule implements Module {
             this.storedType = type;
         }
 
-        public BeanCustomizerBindingBuilder<D> toCollection(String collection) {
+        public StoreCustomizerBindingBuilder<D> toCollection(String collection) {
             if (collection == null) throw new NullPointerException("Null collection");
 
             /* Create our mongo store provider */
-            final MongoStoreProvider<D> provider = new MongoStoreProvider<D>(collection).withBeanConstructionParameters(storedType);
+            final MongoStoreProvider<D> provider = new MongoStoreProvider<D>(collection, storedType);
 
             /* Bind the provider and return a bean customizer */
-            binder.get().bind(literal).toProvider(provider);
-            binder.get().requestInjection(binder);
-            return new BeanCustomizerBindingBuilder<D>(provider);
+            binder.get().bind(literal).toProvider(provider).asEagerSingleton();
+            binder.get().requestInjection(provider);
+            return new StoreCustomizerBindingBuilder<D>(provider);
         }
     }
 
     /* ====================================================================== */
 
-    public class BeanCustomizerBindingBuilder<D extends Document> {
+    public class StoreCustomizerBindingBuilder<D extends Document> {
 
         private final MongoStoreProvider<D> provider;
 
-        private BeanCustomizerBindingBuilder(MongoStoreProvider<D> provider) {
+        private StoreCustomizerBindingBuilder(MongoStoreProvider<D> provider) {
             this.provider = provider;
         }
 
-        public void withBean(Class<?> abstractClassOrInterface, Class<?>... interfaces) {
+        public StoreCustomizerBindingBuilder<D> withBean(Class<?> abstractClassOrInterface, Class<?>... interfaces) {
             provider.withBeanConstructionParameters(abstractClassOrInterface, interfaces);
+            return this;
         }
 
+        public StoreCustomizerBindingBuilder<D> withIndex(String... keys) {
+            return withIndex(false, false, keys);
+        }
+
+        public StoreCustomizerBindingBuilder<D> withIndex(boolean unique, String... keys) {
+            return withIndex(unique, false, keys);
+        }
+
+        public StoreCustomizerBindingBuilder<D> withIndex(boolean unique, boolean sparse, String... keys) {
+            provider.withIndexDefinition(unique, sparse, keys);
+            return this;
+        }
     }
 
 }
