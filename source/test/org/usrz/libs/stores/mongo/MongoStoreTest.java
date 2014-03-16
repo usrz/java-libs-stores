@@ -18,12 +18,11 @@ package org.usrz.libs.stores.mongo;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
-import org.usrz.libs.stores.mongo.MongoDatabaseModule;
-import org.usrz.libs.stores.mongo.MongoDocument;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.configurations.Configurations;
@@ -34,8 +33,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
+import com.mongodb.DB;
 
 public class MongoStoreTest extends AbstractTest {
+
+    private final String referencingCollection = UUID.randomUUID().toString();
+    private final String referencedCollection = UUID.randomUUID().toString();
 
     @BeforeTest
     public void prepare()
@@ -48,26 +51,30 @@ public class MongoStoreTest extends AbstractTest {
             }
         }, new MongoDatabaseModule() {
             @Override public void configure() {
-                this.bind(ReferencingBean.class).toCollection("referencing");
-                this.bind(ReferencedBean.class).toCollection("referenced");
+                this.bind(ReferencingBean.class).toCollection(referencingCollection);
+                this.bind(ReferencedBean.class).toCollection(referencedCollection);
             }
         }).injectMembers(this);
     }
 
+    @AfterTest(alwaysRun = true)
+    public void cleanup()
+    throws IOException {
+        if (db != null) try {
+            db.getCollection(referencingCollection).drop();
+        } finally {
+            db.getCollection(referencedCollection).drop();
+        }
+    }
+
     /* ====================================================================== */
 
+    @Inject
     private Store<ReferencedBean> referencedStore;
+    @Inject
     private Store<ReferencingBean> referencingStore;
-
     @Inject
-    public void setReferencedStore(Store<ReferencedBean> referencedStore) {
-        this.referencedStore = referencedStore;
-    }
-
-    @Inject
-    public void setReferencingStore(Store<ReferencingBean> referencingStore) {
-        this.referencingStore = referencingStore;
-    }
+    private DB db;
 
     /* ====================================================================== */
 
@@ -76,20 +83,20 @@ public class MongoStoreTest extends AbstractTest {
     throws Exception {
 
         ReferencedBean referencedBean = referencedStore.create();
-        referencedStore.put(referencedBean);
-        ReferencedBean referencedBean2 = referencedStore.get(referencedBean.getUUID());
+        referencedStore.store(referencedBean);
+        ReferencedBean referencedBean2 = referencedStore.find(referencedBean.getUUID());
 
         assertNotNull(referencedBean2);
         assertNotSame(referencedBean2, referencedBean);
         assertEquals(referencedBean2.getUUID(), referencedBean.getUUID());
 
         ReferencingBean referencingBean = referencingStore.create().withReferenced(referencedBean2);
-        referencingStore.put(referencingBean);
+        referencingStore.store(referencingBean);
 
         assertNotNull(referencingBean.bean);
         assertNotNull(referencingBean.getReferenceUUID());
 
-        ReferencingBean referencingBean2 = referencingStore.get(referencingBean.getUUID());
+        ReferencingBean referencingBean2 = referencingStore.find(referencingBean.getUUID());
         assertNotNull(referencingBean2);
         assertNull(referencingBean2.bean);
         assertNotNull(referencingBean2.getReferenceUUID());
@@ -104,10 +111,6 @@ public class MongoStoreTest extends AbstractTest {
         private Store<ReferencedBean> store;
         private ReferencedBean bean;
 
-        public ReferencingBean() {
-            super();
-        }
-
         @JsonIgnore
         public ReferencingBean withReferenced(ReferencedBean bean) {
             setReferenceUUID(bean.getUUID());
@@ -118,7 +121,7 @@ public class MongoStoreTest extends AbstractTest {
         @JsonIgnore
         public ReferencedBean getReferenced() {
             if (bean != null) return bean;
-            return bean = store.get(getReferenceUUID());
+            return bean = store.find(getReferenceUUID());
         }
 
         @JsonProperty("reference_uuid")
