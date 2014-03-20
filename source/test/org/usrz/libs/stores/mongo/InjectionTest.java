@@ -36,7 +36,7 @@ import com.google.inject.TypeLiteral;
 
 public class InjectionTest extends AbstractTest {
 
-    @Test(groups="local")
+    @Test
     public void testInjection()
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));

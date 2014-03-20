@@ -79,7 +79,7 @@ public class MongoStoreTest extends AbstractTest {
 
     /* ====================================================================== */
 
-    @Test(groups="local")
+    @Test
     public void testReferences()
     throws Exception {
 
