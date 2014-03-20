@@ -18,6 +18,8 @@ package org.usrz.libs.stores.mongo;
 import java.io.IOException;
 import java.util.UUID;
 
+import javax.inject.Inject;
+
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -32,7 +34,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.mongodb.DB;
 
 public class MongoStoreTest extends AbstractTest {

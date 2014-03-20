@@ -15,10 +15,11 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import javax.inject.Inject;
+
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.utils.configurations.Configurations;
 
-import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.mongodb.DB;

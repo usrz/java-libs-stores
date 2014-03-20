@@ -18,10 +18,11 @@ package org.usrz.libs.stores.mongo;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.inject.Inject;
+
 import org.testng.annotations.Test;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
-import org.usrz.libs.stores.mongo.MongoDatabaseModule;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.configurations.Configurations;
@@ -29,7 +30,6 @@ import org.usrz.libs.utils.configurations.JsonConfigurations;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;

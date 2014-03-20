@@ -17,12 +17,13 @@ package org.usrz.libs.stores.mongo;
 
 import java.lang.reflect.ParameterizedType;
 
+import javax.inject.Inject;
+
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
 
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Provider;
