@@ -32,7 +32,6 @@ import org.usrz.libs.utils.configurations.JsonConfigurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
@@ -46,16 +45,13 @@ public class MongoStoreTest extends AbstractTest {
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(new AbstractModule() {
-            @Override public void configure() {
-                this.bind(Configurations.class).toInstance(configurations);
-            }
-        }, new MongoDatabaseModule() {
-            @Override public void configure() {
-                this.bind(ReferencingBean.class).toCollection(referencingCollection);
-                this.bind(ReferencedBean.class).toCollection(referencedCollection);
-            }
-        }).injectMembers(this);
+        Guice.createInjector(
+            new MongoDatabaseModule(configurations.strip("mongo")) {
+                @Override public void configure() {
+                    this.bind(ReferencingBean.class).toCollection(referencingCollection);
+                    this.bind(ReferencedBean.class).toCollection(referencedCollection);
+                }
+            }).injectMembers(this);
     }
 
     @AfterTest(alwaysRun = true)

@@ -35,7 +35,6 @@ import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.configurations.Configurations;
 import org.usrz.libs.utils.configurations.JsonConfigurations;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
@@ -51,17 +50,14 @@ public class RelationTest extends AbstractTest {
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(new AbstractModule() {
-            @Override public void configure() {
-                this.bind(Configurations.class).toInstance(configurations);
-            }
-        }, new MongoDatabaseModule() {
-            @Override public void configure() {
-                this.bind(Foo.class).toCollection(fooCollection);
-                this.bind(Bar.class).toCollection(barCollection);
-                this.join(Foo.class, Bar.class).toCollection(relCollection);
-            }
-        }).injectMembers(this);
+        Guice.createInjector(
+            new MongoDatabaseModule(configurations.strip("mongo")) {
+                @Override public void configure() {
+                    this.bind(Foo.class).toCollection(fooCollection);
+                    this.bind(Bar.class).toCollection(barCollection);
+                    this.join(Foo.class, Bar.class).toCollection(relCollection);
+                }
+            }).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)

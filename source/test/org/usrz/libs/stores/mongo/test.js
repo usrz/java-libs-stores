@@ -1,5 +1,7 @@
-mongo: {
-  database: "test",
-  host: "localhost",
-  port: 27017
+{
+  mongo: {
+    database: "test",
+    host: "localhost",
+    port: 27017
+  }
 }

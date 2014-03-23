@@ -28,7 +28,6 @@ import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.configurations.Configurations;
 import org.usrz.libs.utils.configurations.JsonConfigurations;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -43,11 +42,7 @@ public class InjectionTest extends AbstractTest {
 
 
         final Injector injector = Guice.createInjector(
-                new AbstractModule() {
-                    @Override public void configure() {
-                        this.bind(Configurations.class).toInstance(configurations);
-                    }
-                }, new MongoDatabaseModule() {
+                new MongoDatabaseModule(configurations.strip("mongo")) {
                     @Override public void configure() {
                         this.bind(MyBean.class).toCollection("foobar");
                     }

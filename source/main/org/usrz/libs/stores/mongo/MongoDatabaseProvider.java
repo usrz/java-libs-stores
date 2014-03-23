@@ -18,6 +18,7 @@ package org.usrz.libs.stores.mongo;
 import javax.inject.Inject;
 
 import org.usrz.libs.logging.Log;
+import org.usrz.libs.utils.configurations.Configuration;
 import org.usrz.libs.utils.configurations.Configurations;
 
 import com.google.inject.Provider;
@@ -38,12 +39,11 @@ public class MongoDatabaseProvider implements Provider<DB> {
     }
 
     @Inject
-    public void setConfigurations(Configurations configurations) {
-        final Configurations mongo = configurations.strip("mongo");
-        host = mongo.get("host", "localhost");
-        port = mongo.get("port", 27017);
-        db = mongo.get("database");
-        if (db == null) throw new IllegalStateException("Missing mongo.db configuration");
+    public void setConfigurations(@Configuration(MongoDatabaseProvider.class) Configurations configurations) {
+        host = configurations.get("host", "localhost");
+        port = configurations.get("port", 27017);
+        db = configurations.get("database");
+        if (db == null) throw new IllegalStateException("Missing \"db\" configuration");
     }
 
     @Override

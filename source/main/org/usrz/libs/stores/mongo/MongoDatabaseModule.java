@@ -28,6 +28,8 @@ import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.beans.BeanBuilder;
 import org.usrz.libs.utils.beans.MapperBuilder;
 import org.usrz.libs.utils.caches.Cache;
+import org.usrz.libs.utils.configurations.Configurations;
+import org.usrz.libs.utils.configurations.ConfigurationsModule;
 import org.usrz.libs.utils.inject.ModuleSupport;
 
 import com.google.inject.Binder;
@@ -38,12 +40,24 @@ import com.mongodb.DB;
 
 public abstract class MongoDatabaseModule extends ModuleSupport {
 
-    protected MongoDatabaseModule() {
-        /* Nothing to do */
+    private final Configurations configurations;
+
+    protected MongoDatabaseModule(Configurations configurations) {
+        if (configurations == null) throw new NullPointerException("Null configurations");
+        this.configurations = configurations;
     }
 
     @Override
     public final void configure(Binder binder) {
+        binder.install(new ConfigurationsModule() {
+
+            @Override
+            public void configure() {
+                this.configure(MongoDatabaseProvider.class).to(configurations);
+            }
+
+        });
+
         binder.bind(ClassPool.class).toInstance(ClassPool.getDefault());
         binder.bind(BeanBuilder.class).asEagerSingleton();;
         binder.bind(MapperBuilder.class).asEagerSingleton();;
