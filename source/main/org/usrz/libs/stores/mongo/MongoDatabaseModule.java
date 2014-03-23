@@ -53,7 +53,7 @@ public abstract class MongoDatabaseModule extends ModuleSupport {
 
             @Override
             public void configure() {
-                this.configure(MongoDatabaseProvider.class).to(configurations);
+                this.configure(MongoDatabaseProvider.class).with(configurations);
             }
 
         });
