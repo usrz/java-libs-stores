@@ -22,16 +22,20 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
 import org.usrz.libs.logging.Log;
+import org.usrz.libs.stores.CachingStore;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.beans.BeanBuilder;
+import org.usrz.libs.utils.caches.Cache;
 
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import com.mongodb.BasicDBObject;
@@ -47,12 +51,12 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
     private final Map<BasicDBObject, BasicDBObject> indexes = new HashMap<>();
     private final Set<Class<?>> interfaces = new HashSet<>();
     private Class<?> abstractClass;
+    private Key<Cache<UUID, D>> cacheKey;
 
     @Inject private Injector injector;
     @Inject private BSONObjectMapper mapper;
     @Inject private BeanBuilder beanBuilder;
     @Inject private DB db;
-
 
     protected MongoStoreProvider(String collection, Class<D> storedType) {
         this.collection = collection;
@@ -107,6 +111,12 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
         return this;
     }
 
+    protected MongoStoreProvider<D> withCacheKey(Key<Cache<UUID, D>> cacheKey) {
+        if (cacheKey == null) throw new NullPointerException("Null key");
+        this.cacheKey = cacheKey;
+        return this;
+    }
+
     @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Store<D> get() {
@@ -134,7 +144,13 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
             }
 
             /* Create our store */
-            return new MongoStore(mapper, injector, collection, type);
+            final Store<D> store = new MongoStore(mapper, injector, collection, type);
+            if (cacheKey == null) return store;
+
+            /* Caching store */
+            final Cache<UUID, D> cache = injector.getInstance(cacheKey);
+            return new CachingStore(store, cache);
+
         } catch (Exception exception) {
             throw new ProvisionException(String.format("Unable to create MongoStore<%s> with collection %s", storedType.getSimpleName(), collection), exception);
         }

@@ -15,7 +15,9 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
+import java.util.UUID;
 
 import javassist.ClassPool;
 
@@ -25,16 +27,16 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.beans.BeanBuilder;
 import org.usrz.libs.utils.beans.MapperBuilder;
+import org.usrz.libs.utils.caches.Cache;
+import org.usrz.libs.utils.inject.ModuleSupport;
 
 import com.google.inject.Binder;
-import com.google.inject.Module;
+import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Types;
 import com.mongodb.DB;
 
-public abstract class MongoDatabaseModule implements Module {
-
-    private final ThreadLocal<Binder> binder = new ThreadLocal<Binder>();
+public abstract class MongoDatabaseModule extends ModuleSupport {
 
     protected MongoDatabaseModule() {
         /* Nothing to do */
@@ -49,14 +51,10 @@ public abstract class MongoDatabaseModule implements Module {
         binder.bind(DB.class).toProvider(MongoDatabaseProvider.class).asEagerSingleton();;
         binder.bind(BSONObjectMapper.class).asEagerSingleton();
 
-        try {
-            this.binder.set(binder);
-            this.configure();
-        } finally {
-            this.binder.remove();
-        }
+        super.configure(binder);
     }
 
+    @Override
     public abstract void configure();
 
     public <D extends Document> CollectionBindingBuilder<D> bind(Class<D> type) {
@@ -100,8 +98,8 @@ public abstract class MongoDatabaseModule implements Module {
             final MongoRelationProvider<L, R> provider = new MongoRelationProvider<>(collection, typeL, typeR);
 
             /* Bind the provider and make sure it gets injected */
-            binder.get().bind(literal).toProvider(provider).asEagerSingleton();
-            binder.get().requestInjection(provider);
+            binder().bind(literal).toProvider(provider).asEagerSingleton();
+            binder().requestInjection(provider);
         }
 
     }
@@ -127,9 +125,9 @@ public abstract class MongoDatabaseModule implements Module {
             final MongoStoreProvider<D> provider = new MongoStoreProvider<D>(collection, storedType);
 
             /* Bind the provider and return a bean customizer */
-            binder.get().bind(literal).toProvider(provider).asEagerSingleton();
-            binder.get().requestInjection(provider);
-            return new StoreCustomizerBindingBuilder<D>(provider);
+            binder().bind(literal).toProvider(provider).asEagerSingleton();
+            binder().requestInjection(provider);
+            return new StoreCustomizerBindingBuilder<D>(provider, storedType);
         }
     }
 
@@ -138,13 +136,36 @@ public abstract class MongoDatabaseModule implements Module {
     public class StoreCustomizerBindingBuilder<D extends Document> {
 
         private final MongoStoreProvider<D> provider;
+        private final Class<D> storedType;
 
-        private StoreCustomizerBindingBuilder(MongoStoreProvider<D> provider) {
+        private StoreCustomizerBindingBuilder(MongoStoreProvider<D> provider, Class<D> storedType) {
             this.provider = provider;
+            this.storedType = storedType;
         }
 
         public StoreCustomizerBindingBuilder<D> withBean(Class<?> abstractClassOrInterface, Class<?>... interfaces) {
             provider.withBeanConstructionParameters(abstractClassOrInterface, interfaces);
+            return this;
+        }
+
+        public StoreCustomizerBindingBuilder<D> withCache() {
+            return this.withCache((Annotation) null);
+        }
+
+        @SuppressWarnings("unchecked")
+        public StoreCustomizerBindingBuilder<D> withCache(Annotation annotation) {
+            final ParameterizedType cacheType = Types.newParameterizedType(Cache.class, UUID.class, storedType);
+            final TypeLiteral<Cache<UUID, D>> literal = (TypeLiteral<Cache<UUID, D>>) TypeLiteral.get(cacheType);
+            return withCache(annotation == null ? Key.get(literal) : Key.get(literal, annotation));
+        }
+
+        public StoreCustomizerBindingBuilder<D> withCache(TypeLiteral<Cache<UUID, D>> literal) {
+            return this.withCache(Key.get(literal));
+        }
+
+
+        public StoreCustomizerBindingBuilder<D> withCache(Key<Cache<UUID, D>> key) {
+            provider.withCacheKey(key);
             return this;
         }
 
