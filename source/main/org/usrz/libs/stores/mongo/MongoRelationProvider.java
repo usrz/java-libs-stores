@@ -23,6 +23,7 @@ import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
+import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -71,8 +72,11 @@ implements Provider<Relation<L, R>> {
             /* Get a hold on our DB collection */
             final DBCollection collection = db.getCollection(this.collection);
 
+            /* Get our executor */
+            final SimpleExecutor executor = injector.getInstance(SimpleExecutor.class);
+
             /* Create our relation */
-            return new MongoRelation<L, R>(collection, storeL, storeR);
+            return new MongoRelation<L, R>(executor, collection, storeL, storeR);
         } catch (Exception exception) {
             throw new ProvisionException(String.format("Unable to created Relation<%s, %s>", typeL.getSimpleName(), typeR.getSimpleName()), exception);
         }

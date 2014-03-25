@@ -17,29 +17,40 @@ package org.usrz.libs.stores;
 
 import java.util.Iterator;
 
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
+import org.usrz.libs.utils.concurrent.QueuedIterator;
 
-public interface Relation<L extends Document, R extends Document> {
+import com.google.common.util.concurrent.Futures;
 
-    public void associate(L left, R right);
+public abstract class AbstractRelation<L extends Document, R extends Document>
+implements Relation<L, R> {
 
-    public NotifyingFuture<?> associateAsync(L left, R right);
+    @Override
+    public void associate(L left, R right) {
+        Futures.getUnchecked(associateAsync(left, right));
+    }
 
-    public void dissociate(L left, R right);
+    @Override
+    public void dissociate(L left, R right) {
+        Futures.getUnchecked(dissociateAsync(left, right));
+    }
 
-    public NotifyingFuture<?> dissociateAsync(L left, R right);
+    @Override
+    public boolean isAssociated(L left, R right) {
+        return Futures.getUnchecked(isAssociatedAsync(left, right));
+    }
 
-    public boolean isAssociated(L left, R right);
+    @Override
+    public Iterator<L> findL(R right) {
+        final QueuedIterator<L> iterator = new QueuedIterator<>();
+        findAsyncL(right, iterator);
+        return iterator;
+    }
 
-    public NotifyingFuture<Boolean> isAssociatedAsync(L left, R right);
-
-    public Iterator<L> findL(R right);
-
-    public NotifyingFuture<?> findAsyncL(R right, Acceptor<L> acceptor);
-
-    public Iterator<R> findR(L left);
-
-    public NotifyingFuture<?> findAsyncR(L left, Acceptor<R> acceptor);
+    @Override
+    public Iterator<R> findR(L left) {
+        final QueuedIterator<R> iterator = new QueuedIterator<>();
+        findAsyncR(left, iterator);
+        return iterator;
+    }
 
 }

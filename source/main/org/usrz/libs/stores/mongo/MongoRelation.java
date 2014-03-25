@@ -17,29 +17,33 @@ package org.usrz.libs.stores.mongo;
 
 import java.util.UUID;
 
+import org.usrz.libs.stores.AbstractRelation;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.DocumentIterator;
-import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
+import org.usrz.libs.utils.concurrent.Acceptor;
+import org.usrz.libs.utils.concurrent.NotifyingFuture;
+import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 
 public class MongoRelation<L extends Document, R extends Document>
-implements Relation<L, R> {
+extends AbstractRelation<L, R> {
 
     private static final String ID = "_id";
     private static final String L = "l";
     private static final String R = "r";
 
+    private final SimpleExecutor executor;
     private final DBCollection collection;
     private final Store<L> storeL;
     private final Store<R> storeR;
 
-    protected MongoRelation(DBCollection collection, Store<L> storeL, Store<R> storeR) {
+    protected MongoRelation(SimpleExecutor executor, DBCollection collection, Store<L> storeL, Store<R> storeR) {
         this.storeL = storeL;
         this.storeR = storeR;
+        this.executor = executor;
         this.collection = collection;
 
         collection.ensureIndex(new BasicDBObject(L, 1), new BasicDBObject("unique", false).append("sparse", false));
@@ -51,73 +55,78 @@ implements Relation<L, R> {
     /* ====================================================================== */
 
     private BasicDBObject object(L l, R r) {
+        return object(l, r, false);
+    }
+
+    private BasicDBObject object(L l, R r, boolean full) {
         final UUID uuidL = l.getUUID();
         final UUID uuidR = r.getUUID();
-        return new BasicDBObject(ID,
+        final BasicDBObject object = new BasicDBObject(ID,
                 new UUID(uuidL.getMostSignificantBits()  ^ uuidR.getMostSignificantBits(),
                          uuidL.getLeastSignificantBits() ^ uuidR.getLeastSignificantBits()));
-    }
-
-    @Override
-    public void associate(L l, R r) {
-        final UUID uuidL = l.getUUID();
-        final UUID uuidR = r.getUUID();
-        collection.save(object(l, r)
-                       .append(L, uuidL)
-                       .append(R, uuidR));
-    }
-
-    @Override
-    public void dissociate(L l, R r) {
-        collection.remove(object(l, r));
-    }
-
-    @Override
-    public boolean isAssociated(L l, R r) {
-        return collection.findOne(object(l, r)) != null;
-    }
-
-    @Override
-    public DocumentIterator<L> findL(R r) {
-        final DBCursor cursor = this.collection.find(new BasicDBObject(R, r.getUUID()), new BasicDBObject(L, 1).append(ID, 0));
-        return new ResultsIterator<L>(cursor, storeL, L);
-    }
-
-    @Override
-    public DocumentIterator<R> findR(L l) {
-        final DBCursor cursor = this.collection.find(new BasicDBObject(L, l.getUUID()), new BasicDBObject(R, 1).append(ID, 0));
-        return new ResultsIterator<R>(cursor, storeR, R);
+        if (full) object.append(L, uuidL).append(R, uuidR);
+        return object;
     }
 
     /* ====================================================================== */
 
-    private static final class ResultsIterator<D extends Document>
-    extends DocumentIterator<D> {
-
-        private final DBCursor cursor;
-        private final Store<D> store;
-        private final String key;
-
-        private ResultsIterator(DBCursor cursor, Store<D> store, String key) {
-            this.cursor = cursor;
-            this.store = store;
-            this.key = key;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return cursor.hasNext();
-        }
-
-        @Override
-        public UUID nextUUID() {
-            return (UUID) cursor.next().get(key);
-        }
-
-        @Override
-        public D next() {
-            return store.find(nextUUID());
-        }
-
+    @Override
+    public NotifyingFuture<?> associateAsync(L l, R r) {
+        return this.executor.run(() -> collection.save(object(l, r, true)));
     }
+
+    @Override
+    public NotifyingFuture<?> dissociateAsync(L l, R r) {
+        return this.executor.run(() -> collection.remove(object(l, r)));
+    }
+
+    @Override
+    public NotifyingFuture<Boolean> isAssociatedAsync(L l, R r) {
+        return this.executor.call(() -> collection.findOne(object(l, r)) != null);
+    }
+
+    @Override
+    public NotifyingFuture<?> findAsyncL(R r, Acceptor<L> acceptor) {
+        return executor.run(() -> {
+            try {
+                /* Build our query on "R" returning only "L" */
+                final BasicDBObject query = new BasicDBObject(R, r.getUUID());
+                final BasicDBObject fields = new BasicDBObject(L, 1).append(ID, 0);
+
+                /* Get our DB cursor and iterate over it */
+                final DBCursor cursor = collection.find(query, fields);
+                cursor.forEach((object) -> {
+                    /* Find *SYNCHRONOUSLY* (we want results in order) */
+                    final L document = storeL.find((UUID) object.get(L));
+                    if (document != null) acceptor.accept(document);
+                });
+                acceptor.completed();
+            } catch (Throwable throwable) {
+                acceptor.failed(throwable);
+            }
+        });
+    }
+
+    @Override
+    public NotifyingFuture<?> findAsyncR(L l, Acceptor<R> acceptor) {
+        return executor.run(() -> {
+            try {
+                /* Build our query on "L" returning only "R" */
+                final BasicDBObject query = new BasicDBObject(L, l.getUUID());
+                final BasicDBObject fields = new BasicDBObject(R, 1).append(ID, 0);
+
+                /* Get our DB cursor and iterate over it */
+                final DBCursor cursor = collection.find(query, fields);
+                cursor.forEach((object) -> {
+                    /* Find *SYNCHRONOUSLY* (we want results in order) */
+                    final R document = storeR.find((UUID) object.get(R));
+                    if (document != null) acceptor.accept(document);
+                });
+                acceptor.completed();
+            } catch (Throwable throwable) {
+                acceptor.failed(throwable);
+            }
+        });
+    }
+
 }
