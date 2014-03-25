@@ -15,49 +15,25 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.regex.Pattern;
+import java.util.UUID;
 
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
-import org.usrz.libs.utils.concurrent.QueuedIterator;
+import com.google.common.util.concurrent.Futures;
 
-public interface Query<D extends Document> {
+public abstract class AbstractStore<D extends Document> implements Store<D> {
 
-    public Operator<D> and(String key);
-
-    public NotifyingFuture<?> documentsAsync(Acceptor<D> acceptor);
-
-    default Iterator<D> documents() {
-        final QueuedIterator<D> iterator = new QueuedIterator<>();
-        this.documentsAsync(iterator);
-        return iterator;
+    @Override
+    public final D find(UUID uuid) {
+        return Futures.getUnchecked(findAsync(uuid));
     }
 
-    /* ====================================================================== */
-
-    public interface Operator<D extends Document> {
-
-        public Query<D> is(Object value);
-
-        public Query<D> isNot(Object value);
-
-        public Query<D> gt(Object value);
-
-        public Query<D> gte(Object value);
-
-        public Query<D> lt(Object value);
-
-        public Query<D> lte(Object value);
-
-        public Query<D> in(Collection<?> collection);
-
-        public Query<D> notIn(Collection<?> collection);
-
-        public Query<D> mod(int divisor, int reminder);
-
-        public Query<D> matches(Pattern pattern);
-
+    @Override
+    public final D store(D object) {
+        return Futures.getUnchecked(storeAsync(object));
     }
+
+    @Override
+    public final Query.Operator<D> query(String field) {
+        return this.query().and(field);
+    }
+
 }

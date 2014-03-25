@@ -15,22 +15,27 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
+import static org.usrz.libs.utils.concurrent.Immediate.immediate;
+
+import java.util.Objects;
 import java.util.UUID;
 
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.utils.caches.Cache;
+import org.usrz.libs.utils.concurrent.NotifyingFuture;
+import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
-public class CachingStore<D extends Document> implements Store<D> {
+public class CachingStore<D extends Document> extends AbstractStore<D> {
 
     private static final Log log = new Log();
+    private final SimpleExecutor executor;
     private final Store<D> store;
     private final Cache<UUID, D> cache;
 
-    public CachingStore(Store<D> store, Cache<UUID, D> cache) {
-        if (store == null) throw new NullPointerException("Null store");
-        if (cache == null) throw new NullPointerException("Null cache");
-        this.store = store;
-        this.cache = cache;
+    public CachingStore(SimpleExecutor executor, Store<D> store, Cache<UUID, D> cache) {
+        this.executor = Objects.requireNonNull(executor, "Null executor");
+        this.store = Objects.requireNonNull(store, "Null store");
+        this.cache = Objects.requireNonNull(cache, "Null cache");
     }
 
     @Override
@@ -49,37 +54,39 @@ public class CachingStore<D extends Document> implements Store<D> {
     }
 
     @Override
-    public D find(UUID uuid) {
-        final D cached = cache.get(uuid);
-        if (cached != null) return cached;
-        log.debug("Document %s not cached", uuid);
-        final D document = store.find(uuid);
-        if (document != null) {
-            log.debug("Caching document %s on retrieval", uuid);
-            cache.put(document.getUUID(), document);
-        }
-        return document;
+    public NotifyingFuture<D> findAsync(UUID uuid) {
+        return executor.delegate(() -> {
+            final D cached = cache.get(uuid);
+            if (cached != null) return immediate(cached);
+            return store.findAsync(uuid).withConsumer((future) -> {
+                try {
+                    final D document = future.get();
+                    log.debug("Caching document %s on fetch", document.getUUID());
+                    cache.put(document.getUUID(), document);
+                } catch (Exception exception) {
+                    log.warn(exception, "Exception caching document");
+                }
+            });
+        });
     }
 
     @Override
-    public D store(D object) {
-        cache.invalidate(object.getUUID());
-        final D document = store.store(object);
-        if (document != null) {
-            log.debug("Caching document %s on store", document.getUUID());
-            cache.put(document.getUUID(), document);
-        }
-        return document;
+    public NotifyingFuture<D> storeAsync(D object) {
+        return store.storeAsync(object).withConsumer((future) -> {
+            try {
+                final D document = future.get();
+                log.debug("Caching document %s on store", document.getUUID());
+                cache.put(document.getUUID(), document);
+            } catch (Exception exception) {
+                log.warn(exception, "Exception caching document");
+            }
+
+        });
     }
 
     @Override
     public Query<D> query() {
         return store.query();
-    }
-
-    @Override
-    public Query<D>.Operator query(String field) {
-        return store.query(field);
     }
 
 }

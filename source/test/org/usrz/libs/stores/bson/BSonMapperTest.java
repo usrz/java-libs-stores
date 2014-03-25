@@ -19,7 +19,6 @@ import java.util.Date;
 
 import org.bson.BSONObject;
 import org.testng.annotations.Test;
-import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.testing.AbstractTest;
 
 public class BSonMapperTest extends AbstractTest {

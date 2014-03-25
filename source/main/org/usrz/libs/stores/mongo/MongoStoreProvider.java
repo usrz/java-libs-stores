@@ -33,6 +33,7 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.beans.BeanBuilder;
 import org.usrz.libs.utils.caches.Cache;
+import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -143,13 +144,16 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
                 collection.ensureIndex(entry.getKey(), entry.getValue());
             }
 
+            /* Get our executor */
+            final SimpleExecutor executor = injector.getInstance(SimpleExecutor.class);
+
             /* Create our store */
-            final Store<D> store = new MongoStore(mapper, injector, collection, type);
+            final Store<D> store = new MongoStore(executor, mapper, injector, collection, type);
             if (cacheKey == null) return store;
 
             /* Caching store */
             final Cache<UUID, D> cache = injector.getInstance(cacheKey);
-            return new CachingStore(store, cache);
+            return new CachingStore(executor, store, cache);
 
         } catch (Exception exception) {
             throw new ProvisionException(String.format("Unable to create MongoStore<%s> with collection %s", storedType.getSimpleName(), collection), exception);

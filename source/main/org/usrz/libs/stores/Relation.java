@@ -15,6 +15,8 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
+import java.util.Iterator;
+
 public interface Relation<L extends Document, R extends Document> {
 
     public void associate(L left, R right);
@@ -23,8 +25,8 @@ public interface Relation<L extends Document, R extends Document> {
 
     public boolean isAssociated(L left, R right);
 
-    public DocumentIterator<L> findL(R right);
+    public Iterator<L> findL(R right);
 
-    public DocumentIterator<R> findR(L left);
+    public Iterator<R> findR(L left);
 
 }

@@ -15,49 +15,26 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.regex.Pattern;
+import java.io.IOException;
+import java.io.InputStream;
 
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
-import org.usrz.libs.utils.concurrent.QueuedIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public interface Query<D extends Document> {
+public interface StoreSupport<D extends Document> {
 
-    public Operator<D> and(String key);
+    public Store<D> getStore();
 
-    public NotifyingFuture<?> documentsAsync(Acceptor<D> acceptor);
+    public ObjectMapper getObjectMapper();
 
-    default Iterator<D> documents() {
-        final QueuedIterator<D> iterator = new QueuedIterator<>();
-        this.documentsAsync(iterator);
-        return iterator;
+    default D create(InputStream input)
+    throws IOException {
+        return update(input, getStore().create());
     }
 
-    /* ====================================================================== */
-
-    public interface Operator<D extends Document> {
-
-        public Query<D> is(Object value);
-
-        public Query<D> isNot(Object value);
-
-        public Query<D> gt(Object value);
-
-        public Query<D> gte(Object value);
-
-        public Query<D> lt(Object value);
-
-        public Query<D> lte(Object value);
-
-        public Query<D> in(Collection<?> collection);
-
-        public Query<D> notIn(Collection<?> collection);
-
-        public Query<D> mod(int divisor, int reminder);
-
-        public Query<D> matches(Pattern pattern);
-
+    default D update(InputStream input, D document)
+    throws IOException {
+        if (document == null) return null;
+        return getObjectMapper().readerForUpdating(document).readValue(input);
     }
+
 }

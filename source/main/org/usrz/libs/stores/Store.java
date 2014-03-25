@@ -17,6 +17,8 @@ package org.usrz.libs.stores;
 
 import java.util.UUID;
 
+import org.usrz.libs.utils.concurrent.NotifyingFuture;
+
 public interface Store<D extends Document> {
 
     public String getName();
@@ -27,10 +29,14 @@ public interface Store<D extends Document> {
 
     public D find(UUID uuid);
 
+    public NotifyingFuture<D> findAsync(UUID uuid);
+
     public D store(D object);
+
+    public NotifyingFuture<D> storeAsync(D object);
 
     public Query<D> query();
 
-    public Query<D>.Operator query(String field);
+    public Query.Operator<D> query(String field);
 
 }

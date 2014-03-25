@@ -64,7 +64,6 @@ implements Provider<Relation<L, R>> {
             final TypeLiteral<Store<L>> literalL = (TypeLiteral<Store<L>>) TypeLiteral.get(storeTypeL);
             final TypeLiteral<Store<R>> literalR = (TypeLiteral<Store<R>>) TypeLiteral.get(storeTypeR);
 
-
             /* Grab our stores */
             final Store<L> storeL = injector.getInstance(Key.get(literalL));
             final Store<R> storeR = injector.getInstance(Key.get(literalR));

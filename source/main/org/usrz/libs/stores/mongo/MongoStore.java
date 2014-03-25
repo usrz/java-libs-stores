@@ -18,10 +18,12 @@ package org.usrz.libs.stores.mongo;
 import java.io.IOException;
 import java.util.UUID;
 
-import org.usrz.libs.stores.DocumentIterator;
+import org.usrz.libs.stores.AbstractStore;
 import org.usrz.libs.stores.Query;
-import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
+import org.usrz.libs.utils.concurrent.Acceptor;
+import org.usrz.libs.utils.concurrent.NotifyingFuture;
+import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.google.inject.Injector;
 import com.mongodb.BasicDBObject;
@@ -30,14 +32,16 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 
-public class MongoStore<D extends MongoDocument> implements Store<D> {
+public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
 
+    private final SimpleExecutor executor;
     private final DBCollection collection;
     private final BSONObjectMapper mapper;
     private final Injector injector;
     private final Class<D> type;
 
-    protected MongoStore(BSONObjectMapper mapper, Injector injector, DBCollection collection, Class<D> type) {
+    protected MongoStore(SimpleExecutor executor, BSONObjectMapper mapper, Injector injector, DBCollection collection, Class<D> type) {
+        this.executor = executor;
         this.collection = collection;
         this.injector = injector;
         this.mapper = mapper;
@@ -63,54 +67,45 @@ public class MongoStore<D extends MongoDocument> implements Store<D> {
     }
 
     @Override
-    public D find(UUID uuid) {
-        return convert(collection.findOne(new BasicDBObject("_id", uuid)));
+    public NotifyingFuture<D> findAsync(UUID uuid) {
+        return executor.call(() -> {
+            return convert(collection.findOne(new BasicDBObject("_id", uuid)));
+        });
     }
 
     @Override
-    public D store(D object) {
-        try {
+    public NotifyingFuture<D> storeAsync(D object) {
+        return executor.call(() -> {
             collection.save(mapper.writeValueAsBson(object));
             return object;
-        } catch (IOException exception) {
-            throw new MongoException("Exception mapping " + type.getName() + " to BSON", exception);
-        }
+        });
     }
 
     /* ====================================================================== */
 
     @Override
     public Query<D> query() {
-        return new Query<D>() {
+        return new MongoQuery<D>(new BasicDBObject()) {
 
             @Override
-            public DocumentIterator<D> results() {
-                /* Normalize alias "uuid" -> "_id" */
-                if (query.containsKey((Object)"uuid")) {
-                    query.put("_id", query.remove("uuid"));
-                }
-                final DBCursor cursor = collection.find(query);
-                return new DocumentIterator<D>() {
-                    @Override public boolean hasNext() { return cursor.hasNext(); }
-                    @Override public D next() { return convert(cursor.next()); }
-                };
-            }
+            public NotifyingFuture<?> documentsAsync(Acceptor<D> acceptor) {
+                return executor.run(() -> {
+                    try {
+                        /* Normalize alias "uuid" -> "_id" */
+                        if (query.containsKey((Object)"uuid")) {
+                            query.put("_id", query.remove("uuid"));
+                        }
 
-            @Override
-            public D first() {
-                /* Normalize alias "uuid" -> "_id" */
-                if (query.containsKey((Object)"uuid")) {
-                    query.put("_id", query.remove("uuid"));
-                }
-                return convert(collection.findOne(query));
+                        /* Get our DB cursor and iterate over it */
+                        final DBCursor cursor = collection.find(query);
+                        cursor.forEach((object) -> acceptor.accept(convert(object)));
+                        acceptor.completed();
+                    } catch (Throwable throwable) {
+                        acceptor.failed(throwable);
+                    }
+                });
             }
-
         };
-    }
-
-    @Override
-    public Query<D>.Operator query(String field) {
-        return this.query().and(field);
     }
 
     /* ====================================================================== */
