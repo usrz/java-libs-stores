@@ -17,6 +17,7 @@ package org.usrz.libs.stores.mongo;
 
 import static java.lang.Integer.toHexString;
 
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -36,7 +37,7 @@ public class MongoDocument implements Document {
 
     @JsonProperty("uuid")
     private final void setUUID(UUID uuid) {
-        if (uuid == null) throw new NullPointerException("Null UUID");
+        Objects.requireNonNull(uuid, "Null UUID");
         if (this.uuid.compareAndSet(null, uuid)) return;
         throw new IllegalStateException("UUID already set");
     }

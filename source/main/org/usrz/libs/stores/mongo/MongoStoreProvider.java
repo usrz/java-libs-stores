@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -68,7 +69,7 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
     protected MongoStoreProvider<D> withBeanConstructionParameters(Class<?> abstractType, Class<?>... interfaces) {
 
         /* We *MUST* have at least one type */
-        if (abstractType == null) throw new NullPointerException("Null abstract type");
+        Objects.requireNonNull(abstractType, "Null abstract type");
 
         /* Clear our interfaces */
         this.interfaces.clear();
@@ -113,8 +114,7 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
     }
 
     protected MongoStoreProvider<D> withCacheKey(Key<Cache<UUID, D>> cacheKey) {
-        if (cacheKey == null) throw new NullPointerException("Null key");
-        this.cacheKey = cacheKey;
+        this.cacheKey = Objects.requireNonNull(cacheKey, "Null key");
         return this;
     }
 

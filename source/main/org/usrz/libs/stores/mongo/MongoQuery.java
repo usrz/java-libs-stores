@@ -37,8 +37,7 @@ public abstract class MongoQuery<D extends MongoDocument> implements Query<D> {
 
     @Override
     public Operator and(String key) {
-        if (key == null) throw new NullPointerException("Null key");
-        return new Operator(key);
+        return new Operator(Objects.requireNonNull(key, "Null key"));
     }
 
     @Override

@@ -17,6 +17,7 @@ package org.usrz.libs.stores.mongo;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
+import java.util.Objects;
 import java.util.UUID;
 
 import javassist.ClassPool;
@@ -43,8 +44,7 @@ public abstract class MongoDatabaseModule extends ModuleSupport {
     private final Configurations configurations;
 
     protected MongoDatabaseModule(Configurations configurations) {
-        if (configurations == null) throw new NullPointerException("Null configurations");
-        this.configurations = configurations;
+        this.configurations = Objects.requireNonNull(configurations, "Null Configurations");
     }
 
     @Override
@@ -76,8 +76,8 @@ public abstract class MongoDatabaseModule extends ModuleSupport {
     }
 
     public <L extends Document, R extends Document> RelationBindingBuilder<L, R> join(Class<L> typeL, Class<R> typeR) {
-        if (typeL == null) throw new NullPointerException("Null type L");
-        if (typeR == null) throw new NullPointerException("Null type R");
+        Objects.requireNonNull(typeL, "Null type L");
+        Objects.requireNonNull(typeR, "Null type R");
         return new RelationBindingBuilder<L, R>(typeL, typeR);
     }
 
@@ -106,7 +106,7 @@ public abstract class MongoDatabaseModule extends ModuleSupport {
         }
 
         public void toCollection(String collection) {
-            if (collection == null) throw new NullPointerException("Null collection");
+            Objects.requireNonNull(collection, "Null collection");
 
             /* Create our mongo store provider */
             final MongoRelationProvider<L, R> provider = new MongoRelationProvider<>(collection, typeL, typeR);
@@ -133,7 +133,7 @@ public abstract class MongoDatabaseModule extends ModuleSupport {
         }
 
         public StoreCustomizerBindingBuilder<D> toCollection(String collection) {
-            if (collection == null) throw new NullPointerException("Null collection");
+            Objects.requireNonNull(collection, "Null collection");
 
             /* Create our mongo store provider */
             final MongoStoreProvider<D> provider = new MongoStoreProvider<D>(collection, storedType);

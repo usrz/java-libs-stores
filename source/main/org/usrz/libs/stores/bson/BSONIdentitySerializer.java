@@ -16,6 +16,7 @@
 package org.usrz.libs.stores.bson;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -45,8 +46,7 @@ public class BSONIdentitySerializer<T> extends JsonSerializer<T> {
     private final Class<T> type;
 
     private BSONIdentitySerializer(Class<T> type) {
-        if (type == null) throw new NullPointerException("Null type");
-        this.type = type;
+        this.type = Objects.requireNonNull(type, "Null type");
     }
 
     @Override

@@ -19,6 +19,7 @@ import static com.fasterxml.jackson.databind.PropertyNamingStrategy.CAMEL_CASE_T
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 import org.bson.BSONObject;
 
@@ -79,7 +80,7 @@ public class BSONObjectMapper extends ObjectMapper {
 
     public <T> T readValueWithView(BSONObject object, Class<T> type, Class<?> view)
     throws JsonProcessingException, IOException {
-        if (view == null) throw new NullPointerException("Null view");
+        Objects.requireNonNull(view, "Null view");
         return readBSON(readerWithView(view), object, type);
     }
 
@@ -97,7 +98,7 @@ public class BSONObjectMapper extends ObjectMapper {
 
     public BasicDBObject writeValueAsBsonWithView(Object object, Class<?> view)
     throws JsonGenerationException, JsonMappingException, IOException {
-        if (view == null) throw new NullPointerException("Null view");
+        Objects.requireNonNull(view, "Null view");
         return writeBson(writerWithView(view), object);
     }
 
