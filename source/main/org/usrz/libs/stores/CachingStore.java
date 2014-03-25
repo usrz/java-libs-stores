@@ -61,6 +61,7 @@ public class CachingStore<D extends Document> extends AbstractStore<D> {
             return store.findAsync(uuid).withConsumer((future) -> {
                 try {
                     final D document = future.get();
+                    if (document == null) return;
                     log.debug("Caching document %s on fetch", document.getUUID());
                     cache.put(document.getUUID(), document);
                 } catch (Exception exception) {
@@ -75,6 +76,7 @@ public class CachingStore<D extends Document> extends AbstractStore<D> {
         return store.storeAsync(object).withConsumer((future) -> {
             try {
                 final D document = future.get();
+                if (document == null) return;
                 log.debug("Caching document %s on store", document.getUUID());
                 cache.put(document.getUUID(), document);
             } catch (Exception exception) {
