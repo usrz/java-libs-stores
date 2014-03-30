@@ -17,6 +17,7 @@ package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.usrz.libs.stores.AbstractStore;
 import org.usrz.libs.stores.Query;
@@ -37,13 +38,15 @@ public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
     private final SimpleExecutor executor;
     private final DBCollection collection;
     private final BSONObjectMapper mapper;
+    private final Function<D, D> creator;
     private final Injector injector;
     private final Class<D> type;
 
-    protected MongoStore(SimpleExecutor executor, BSONObjectMapper mapper, Injector injector, DBCollection collection, Class<D> type) {
-        this.executor = executor;
+    protected MongoStore(SimpleExecutor executor, BSONObjectMapper mapper, Injector injector, DBCollection collection, Function<D, D> creator, Class<D> type) {
         this.collection = collection;
+        this.executor = executor;
         this.injector = injector;
+        this.creator = creator;
         this.mapper = mapper;
         this.type = type;
         mapper.addMixInAnnotations(type, MongoDocumentMixIn.class);
@@ -63,7 +66,7 @@ public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
     public D create() {
         final BasicDBObject object = new BasicDBObject();
         object.put("_id", UUID.randomUUID());
-        return convert(object);
+        return creator.apply(convert(object));
     }
 
     @Override

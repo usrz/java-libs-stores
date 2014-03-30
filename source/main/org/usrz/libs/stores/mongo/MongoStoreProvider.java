@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 
@@ -53,7 +54,8 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
     private final Map<BasicDBObject, BasicDBObject> indexes = new HashMap<>();
     private final Set<Class<?>> interfaces = new HashSet<>();
     private Class<?> abstractClass;
-    private Key<Cache<UUID, D>> cacheKey;
+    private Key<? extends Function<D, D>> customizerKey;
+    private Key<? extends Cache<UUID, D>> cacheKey;
 
     @Inject private Injector injector;
     @Inject private BSONObjectMapper mapper;
@@ -113,8 +115,13 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
         return this;
     }
 
-    protected MongoStoreProvider<D> withCacheKey(Key<Cache<UUID, D>> cacheKey) {
+    protected MongoStoreProvider<D> withCacheKey(Key<? extends Cache<UUID, D>> cacheKey) {
         this.cacheKey = Objects.requireNonNull(cacheKey, "Null key");
+        return this;
+    }
+
+    protected MongoStoreProvider<D> withCreationCustomizerKey(Key<? extends Function<D, D>> customizer) {
+        this.customizerKey = Objects.requireNonNull(customizer, "Null creation customizer");
         return this;
     }
 
@@ -144,11 +151,12 @@ public class MongoStoreProvider<D extends Document> implements Provider<Store<D>
                 collection.ensureIndex(entry.getKey(), entry.getValue());
             }
 
-            /* Get our executor */
+            /* Get our executor and customizer */
             final SimpleExecutor executor = injector.getInstance(SimpleExecutor.class);
+            final Function<D, D> customizer = customizerKey == null ? Function.identity() : injector.getInstance(customizerKey);
 
             /* Create our store */
-            final Store<D> store = new MongoStore(executor, mapper, injector, collection, type);
+            final Store<D> store = new MongoStore(executor, mapper, injector, collection, customizer, type);
             if (cacheKey == null) return store;
 
             /* Caching store */

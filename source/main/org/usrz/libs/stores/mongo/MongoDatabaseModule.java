@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 
 import javassist.ClassPool;
 
@@ -157,7 +158,12 @@ public abstract class MongoDatabaseModule extends ModuleSupport {
             this.storedType = storedType;
         }
 
-        public StoreCustomizerBindingBuilder<D> withBean(Class<?> abstractClassOrInterface, Class<?>... interfaces) {
+        public StoreCustomizerBindingBuilder<D> withConstructionCustomizer(Class<? extends Function<D, D>> type) {
+            provider.withCreationCustomizerKey(Key.get(type));
+            return this;
+        }
+
+        public StoreCustomizerBindingBuilder<D> withBeanDetails(Class<?> abstractClassOrInterface, Class<?>... interfaces) {
             provider.withBeanConstructionParameters(abstractClassOrInterface, interfaces);
             return this;
         }
