@@ -44,6 +44,8 @@ public class MongoStoreTest extends AbstractTest {
     public void prepare()
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
+        configurations.list(System.err);
+
 
         Guice.createInjector(
             new MongoDatabaseModule(configurations.strip("mongo")) {

@@ -30,17 +30,18 @@ import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.beans.BeanBuilder;
 import org.usrz.libs.utils.beans.MapperBuilder;
 import org.usrz.libs.utils.caches.Cache;
+import org.usrz.libs.utils.concurrent.SimpleExecutor;
 import org.usrz.libs.utils.configurations.Configurations;
 import org.usrz.libs.utils.configurations.ConfigurationsModule;
-import org.usrz.libs.utils.inject.ModuleSupport;
 
 import com.google.inject.Binder;
 import com.google.inject.Key;
+import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Types;
 import com.mongodb.DB;
 
-public abstract class MongoDatabaseModule extends ModuleSupport {
+public abstract class MongoDatabaseModule implements Module {
 
     private final Configurations configurations;
 
@@ -48,28 +49,36 @@ public abstract class MongoDatabaseModule extends ModuleSupport {
         this.configurations = Objects.requireNonNull(configurations, "Null Configurations");
     }
 
+    private Binder binder;
+
+    private Binder binder() {
+        return binder;
+    }
+
     @Override
     public final void configure(Binder binder) {
+        binder = binder.skipSources(this.getClass());
         binder.install(new ConfigurationsModule() {
 
             @Override
             public void configure() {
-                this.configure(MongoDatabaseProvider.class).with(configurations);
+                this.bind(SimpleExecutor.class);
+                this.bind(DB.class).toProvider(MongoDatabaseProvider.class)
+                                   .withConfigurations(configurations)
+                                   .asEagerSingleton();
             }
 
         });
 
         binder.bind(ClassPool.class).toInstance(ClassPool.getDefault());
-        binder.bind(BeanBuilder.class).asEagerSingleton();;
-        binder.bind(MapperBuilder.class).asEagerSingleton();;
+        binder.bind(BeanBuilder.class).asEagerSingleton();
+        binder.bind(MapperBuilder.class).asEagerSingleton();
 
-        binder.bind(DB.class).toProvider(MongoDatabaseProvider.class).asEagerSingleton();;
         binder.bind(BSONObjectMapper.class).asEagerSingleton();
-
-        super.configure(binder);
+        this.binder = binder;
+        this.configure();
     }
 
-    @Override
     public abstract void configure();
 
     public <D extends Document> CollectionBindingBuilder<D> bind(Class<D> type) {

@@ -15,35 +15,47 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
-import javax.inject.Inject;
+import java.util.Objects;
+
+import javax.inject.Named;
 
 import org.usrz.libs.logging.Log;
-import org.usrz.libs.utils.configurations.Configuration;
-import org.usrz.libs.utils.configurations.Configurations;
+import org.usrz.libs.utils.configurations.ConfiguredProvider;
 
-import com.google.inject.Provider;
+import com.google.inject.Inject;
 import com.google.inject.ProvisionException;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 
-public class MongoDatabaseProvider implements Provider<DB> {
+@SuppressWarnings("restriction")
+public class MongoDatabaseProvider extends ConfiguredProvider<DB> {
 
     private static final Log log = new Log();
 
-    private String host;
-    private int port;
-    private String db;
+    private String host = "localhost";
+    private int port = 27017;
+    private String db = null;
 
     public MongoDatabaseProvider() {
         /* Nothing to do */
     }
 
+    @Inject(optional=true)
+    private void setHost(@Named("host") String host) {
+        System.err.println("HOST IS " + host);
+        this.host = Objects.requireNonNull(host, "Null host");
+    }
+
+    @Inject(optional=true)
+    private void setPort(@Named("port") int port) {
+        if ((port < 1) || port > Short.MAX_VALUE)
+            throw new IllegalArgumentException("Invalid port " + port);
+        this.port = port;
+    }
+
     @Inject
-    public void setConfigurations(@Configuration(MongoDatabaseProvider.class) Configurations configurations) {
-        host = configurations.get("host", "localhost");
-        port = configurations.get("port", 27017);
-        db = configurations.get("database");
-        if (db == null) throw new IllegalStateException("Missing \"db\" configuration");
+    private void setDatabase(@Named("database") String db) {
+        this.db = Objects.requireNonNull(host, "Null database");
     }
 
     @Override
