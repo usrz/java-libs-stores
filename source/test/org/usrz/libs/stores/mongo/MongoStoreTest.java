@@ -20,15 +20,16 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.usrz.libs.configurations.Configurations;
+import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
+import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.configurations.Configurations;
-import org.usrz.libs.utils.configurations.JsonConfigurations;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -40,23 +41,19 @@ public class MongoStoreTest extends AbstractTest {
     private final String referencingCollection = UUID.randomUUID().toString();
     private final String referencedCollection = UUID.randomUUID().toString();
 
-    @BeforeTest
+    @BeforeClass
     public void prepare()
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
-        configurations.list(System.err);
 
-
-        Guice.createInjector(
-            new MongoDatabaseModule(configurations.strip("mongo")) {
-                @Override public void configure() {
-                    this.bind(ReferencingBean.class).toCollection(referencingCollection);
-                    this.bind(ReferencedBean.class).toCollection(referencedCollection);
-                }
-            }).injectMembers(this);
+        Guice.createInjector(MongoBuilder.apply((builder) -> {
+                builder.configure(configurations.strip("mongo"));
+                builder.store(ReferencingBean.class, referencingCollection);
+                builder.store(ReferencedBean.class, referencedCollection);
+        })).injectMembers(this);
     }
 
-    @AfterTest(alwaysRun = true)
+    @AfterClass(alwaysRun = true)
     public void cleanup()
     throws IOException {
         if (db != null) try {

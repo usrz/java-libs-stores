@@ -40,7 +40,7 @@ extends AbstractRelation<L, R> {
     private final Store<L> storeL;
     private final Store<R> storeR;
 
-    protected MongoRelation(SimpleExecutor executor, DBCollection collection, Store<L> storeL, Store<R> storeR) {
+    public MongoRelation(SimpleExecutor executor, DBCollection collection, Store<L> storeL, Store<R> storeR) {
         this.storeL = storeL;
         this.storeR = storeR;
         this.executor = executor;

@@ -25,45 +25,29 @@ import org.usrz.libs.utils.caches.Cache;
 import org.usrz.libs.utils.concurrent.NotifyingFuture;
 import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
-public class CachingStore<D extends Document> extends AbstractStore<D> {
+public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
 
     private static final Log log = new Log();
     private final SimpleExecutor executor;
-    private final Store<D> store;
     private final Cache<UUID, D> cache;
 
     public CachingStore(SimpleExecutor executor, Store<D> store, Cache<UUID, D> cache) {
+        super(store);
         this.executor = Objects.requireNonNull(executor, "Null executor");
-        this.store = Objects.requireNonNull(store, "Null store");
         this.cache = Objects.requireNonNull(cache, "Null cache");
-    }
-
-    @Override
-    public String getName() {
-        return store.getName();
-    }
-
-    @Override
-    public Class<D> getType() {
-        return store.getType();
-    }
-
-    @Override
-    public D create() {
-        return store.create();
     }
 
     @Override
     public NotifyingFuture<D> findAsync(UUID uuid) {
         return executor.delegate(() -> {
-            final D cached = cache.get(uuid);
+            final D cached = cache.fetch(uuid);
             if (cached != null) return immediate(cached);
             return store.findAsync(uuid).withConsumer((future) -> {
                 try {
                     final D document = future.get();
                     if (document == null) return;
                     log.debug("Caching document %s on fetch", document.getUUID());
-                    cache.put(document.getUUID(), document);
+                    cache.store(document.getUUID(), document);
                 } catch (Exception exception) {
                     log.warn(exception, "Exception caching document");
                 }
@@ -78,17 +62,12 @@ public class CachingStore<D extends Document> extends AbstractStore<D> {
                 final D document = future.get();
                 if (document == null) return;
                 log.debug("Caching document %s on store", document.getUUID());
-                cache.put(document.getUUID(), document);
+                cache.store(document.getUUID(), document);
             } catch (Exception exception) {
                 log.warn(exception, "Exception caching document");
             }
 
         });
-    }
-
-    @Override
-    public Query<D> query() {
-        return store.query();
     }
 
 }

@@ -26,14 +26,15 @@ import javax.inject.Inject;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.usrz.libs.configurations.Configurations;
+import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
+import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.configurations.Configurations;
-import org.usrz.libs.utils.configurations.JsonConfigurations;
 
 import com.google.inject.Guice;
 import com.mongodb.DB;
@@ -50,14 +51,12 @@ public class RelationTest extends AbstractTest {
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(
-            new MongoDatabaseModule(configurations.strip("mongo")) {
-                @Override public void configure() {
-                    this.bind(Foo.class).toCollection(fooCollection);
-                    this.bind(Bar.class).toCollection(barCollection);
-                    this.join(Foo.class, Bar.class).toCollection(relCollection);
-                }
-            }).injectMembers(this);
+        Guice.createInjector(MongoBuilder.apply((builder) -> {
+            builder.configure(configurations.strip("mongo"));
+            builder.store(Foo.class, fooCollection);
+            builder.store(Bar.class, barCollection);
+            builder.relate(Foo.class, Bar.class, relCollection);
+        })).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)
