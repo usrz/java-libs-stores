@@ -116,8 +116,6 @@ public class MongoBuilder {
               .annotatedWith(Names.named(collection))
               .toProvider(provider);
 
-        // TODO: indexes!!!!
-
         /* Bind our relation */
         @SuppressWarnings("unchecked")
         final TypeLiteral<Relation<L, R>> type = (TypeLiteral<Relation<L, R>>)

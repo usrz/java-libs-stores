@@ -36,17 +36,13 @@ public class MongoStoreBuilder<D extends Document> {
 
     private final MongoCollectionProvider collection;
     private final MongoBeanClassProvider<D> bean;
+    private final TypeLiteral<D> type;
     private final Binder binder;
 
     protected MongoStoreBuilder(Binder binder, Annotation unique, TypeLiteral<D> type, String collection) {
+        this.type = notNull(type, "Null type literal");
         this.binder = notNull(binder, "Null binder");
         binder.skipSources(this.getClass());
-
-        /* Get our store and bean type */
-        @SuppressWarnings("unchecked")
-        final TypeLiteral<Store<D>> storeType = (TypeLiteral<Store<D>>) TypeLiteral.get(Types.newParameterizedType(Store.class, type.getType()));
-        @SuppressWarnings("unchecked")
-        final TypeLiteral<Class<D>> beanType = (TypeLiteral<Class<D>>) TypeLiteral.get(Types.newParameterizedType(Class.class, type.getType()));
 
         /* Start creating and binding our collection (annotated by collection name) */
         this.collection = new MongoCollectionProvider(collection, unique);
@@ -54,11 +50,16 @@ public class MongoStoreBuilder<D extends Document> {
               .annotatedWith(Names.named(collection))
               .toProvider(this.collection);
 
-        /* Create our bean class provider */
+        /* Create our bean Class<D> provider */
+        @SuppressWarnings("unchecked")
+        final TypeLiteral<Class<D>> beanType = (TypeLiteral<Class<D>>) TypeLiteral.get(Types.newParameterizedType(Class.class, type.getType()));
         this.bean = new MongoBeanClassProvider<D>(type.getRawType(), unique);
         binder.bind(beanType).toProvider(this.bean);
 
-        binder.bind(storeType).toProvider(new MongoStoreProvider<D>(unique, beanType, collection));
+        /* Finally bind our Store<D> provider */
+        @SuppressWarnings("unchecked")
+        final TypeLiteral<Store<D>> storeType = (TypeLiteral<Store<D>>) TypeLiteral.get(Types.newParameterizedType(Store.class, type.getType()));
+        binder.bind(storeType).toProvider(new MongoStoreProvider<D>(unique, type, collection));
     }
 
     public MongoIndexBuilder createIndex() {
@@ -74,10 +75,16 @@ public class MongoStoreBuilder<D extends Document> {
     }
 
     public void withCache(Cache<UUID, D> cache) {
-        binder.bind(new TypeLiteral<Cache<UUID, D>>(){}).toInstance(cache);
+        @SuppressWarnings("unchecked")
+        final TypeLiteral<Cache<UUID, D>> cacheType = (TypeLiteral<Cache<UUID, D>>)
+                TypeLiteral.get(Types.newParameterizedType(Cache.class, UUID.class, type.getType()));
+        binder.bind(cacheType).toInstance(cache);
     }
 
     public void withCreator(Function<D, ? extends D> function) {
-        binder.bind(new TypeLiteral<Function<D, ? extends D>>(){}).toInstance(function);
+        @SuppressWarnings("unchecked")
+        final TypeLiteral<Function<D, ? extends D>> functionType = (TypeLiteral<Function<D, ? extends D>>)
+                TypeLiteral.get(Types.newParameterizedType(Function.class, type.getType(), type.getType()));
+        binder.bind(functionType).toInstance(function);
     }
 }

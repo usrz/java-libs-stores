@@ -15,11 +15,7 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
-import java.io.IOException;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
-import javax.inject.Inject;
 
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
@@ -29,6 +25,8 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
+import org.usrz.libs.utils.caches.Cache;
+import org.usrz.libs.utils.caches.SimpleCache;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -36,38 +34,40 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 
 
-public class InjectionTest extends AbstractTest {
+
+public class CachingTest extends AbstractTest {
 
     @Test
     public void testInjection()
-    throws IOException {
+    throws Exception {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
-
+        final Cache<UUID, MyBean> cache = new SimpleCache<>();
 
         final Injector injector = Guice.createInjector(MongoBuilder.apply((builder) -> {
             builder.configure(configurations.strip("mongo"));
-            builder.store(MyBean.class, UUID.randomUUID().toString());
+            builder.store(MyBean.class, UUID.randomUUID().toString())
+                   .withCache(cache);
         }));
 
         final Store<MyBean> store = injector.getInstance(Key.get(new TypeLiteral<Store<MyBean>>(){}));
-        assertNotNull(store);
+        assertNotNull(store, "Null store");
 
-        final AtomicReference<Store<MyBean>> reference = new AtomicReference<>();
-        injector.injectMembers(new Object() {
-            @Inject
-            public void setStore(Store<MyBean> store) {
-                if (reference.compareAndSet(null, store)) return;
-                throw new IllegalStateException("Injected multiple times");
-            }
-        });
+        final MyBean bean = store.create();
+        assertNotNull(bean, "Null bean created");
+        assertNull(cache.fetch(bean.getUUID()), "Cached on creation");
 
-        assertNotNull(reference.get());
-        assertSame(store, reference.get());
+        store.store(bean);
+        Thread.sleep(100); // cache on store is asynchronous...
+        assertNotNull(cache.fetch(bean.getUUID()), "Not cached on store");
+
+        cache.invalidate(bean.getUUID());
+        assertNull(cache.fetch(bean.getUUID()), "Cache not invalidated");
+
+        final MyBean bean2 = store.find(bean.getUUID());
+        assertNotNull(bean2, "Stored bean not found");
+        assertNotNull(cache.fetch(bean2.getUUID()), "Not cached on find");
 
     }
 
-    public interface MyBean extends Document {
-        public void setString(String string);
-        public String getString();
-    }
+    public interface MyBean extends Document {}
 }

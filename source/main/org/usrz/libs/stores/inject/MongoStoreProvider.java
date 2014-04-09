@@ -16,24 +16,28 @@
 package org.usrz.libs.stores.inject;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.util.UUID;
+import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.usrz.libs.logging.Log;
+import org.usrz.libs.stores.CachingStore;
+import org.usrz.libs.stores.CreatorStore;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.stores.mongo.MongoStore;
 import org.usrz.libs.utils.Injections;
+import org.usrz.libs.utils.caches.Cache;
 import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import com.google.inject.util.Types;
 import com.mongodb.DBCollection;
 
 public class MongoStoreProvider<D extends Document>
@@ -41,14 +45,14 @@ implements Provider<Store<D>> {
 
     private final Log log = new Log();
     private final Annotation annotation;
-    private final TypeLiteral<Class<D>> bean;
+    private final TypeLiteral<D> type;
     private final String collection;
     private Store<D> store;
 
-    public MongoStoreProvider(Annotation annotation, TypeLiteral<Class<D>> bean, String collection) {
+    public MongoStoreProvider(Annotation annotation, TypeLiteral<D> type, String collection) {
         this.annotation = annotation;
         this.collection = collection;
-        this.bean = bean;
+        this.type = type;;
     }
 
     @Inject
@@ -57,13 +61,30 @@ implements Provider<Store<D>> {
         final SimpleExecutor executor = Injections.getInstance(injector, SimpleExecutor.class, annotation);
         final BSONObjectMapper mapper = Injections.getInstance(injector, BSONObjectMapper.class, annotation);
         final DBCollection collection = Injections.getInstance(injector, DBCollection.class, Names.named(this.collection));
-        final Class<D> beanClass = Injections.getInstance(injector, Key.get(bean));
 
-        // TODO caches + creators!
+        /* Bean class */
+        final TypeLiteral<Class<D>> beanType = (TypeLiteral<Class<D>>) TypeLiteral.get(Types.newParameterizedType(Class.class, type.getType()));
+        final Class<D> beanClass = Injections.getInstance(injector, Key.get(beanType));
 
-        this.store = new MongoStore(executor, mapper, injector, collection, beanClass);
-        final Type type = ((ParameterizedType) bean.getType()).getActualTypeArguments()[0];
-        log.info("Created Store<%s> in collection %s", type.getTypeName(), collection.getName());
+        /* Create the basic store */
+        store = new MongoStore(executor, mapper, injector, collection, beanClass);
+        log.info("Created Store<%s> in collection %s", type, collection.getName());
+
+        /* Caches */
+        final TypeLiteral<Function<D, ? extends D>> functionType = (TypeLiteral<Function<D, ? extends D>>) TypeLiteral.get(Types.newParameterizedType(Function.class, type.getType(), type.getType()));
+        final Function<D, ? extends D> function = Injections.getInstance(injector, Key.get(functionType), true);
+        if (function != null) {
+            store = new CreatorStore<D>(store, function);
+            log.info("Customising creation on Store<%s> with function %s", type, function);
+        }
+
+        /* Caches */
+        final TypeLiteral<Cache<UUID, D>> cacheType = (TypeLiteral<Cache<UUID, D>>) TypeLiteral.get(Types.newParameterizedType(Cache.class, UUID.class, type.getType()));
+        final Cache<UUID, D> cache = Injections.getInstance(injector, Key.get(cacheType), true);
+        if (cache != null) {
+            store = new CachingStore<D>(executor, store, cache);
+            log.info("Enabling cache on Store<%s> with cache %s", type, cache);
+        }
     }
 
     @Override

@@ -15,11 +15,8 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
-import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
-
-import javax.inject.Inject;
 
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
@@ -36,38 +33,31 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 
 
-public class InjectionTest extends AbstractTest {
+
+
+public class CreatorStoreTest extends AbstractTest {
 
     @Test
     public void testInjection()
-    throws IOException {
-        final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
+    throws Exception {
 
+        final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
+        final AtomicReference<MyBean> created = new AtomicReference<>();
 
         final Injector injector = Guice.createInjector(MongoBuilder.apply((builder) -> {
             builder.configure(configurations.strip("mongo"));
-            builder.store(MyBean.class, UUID.randomUUID().toString());
+            builder.store(MyBean.class, UUID.randomUUID().toString())
+                   .withCreator((bean) -> { created.set(bean); return bean; } );
         }));
 
         final Store<MyBean> store = injector.getInstance(Key.get(new TypeLiteral<Store<MyBean>>(){}));
-        assertNotNull(store);
+        assertNotNull(store, "Null store");
 
-        final AtomicReference<Store<MyBean>> reference = new AtomicReference<>();
-        injector.injectMembers(new Object() {
-            @Inject
-            public void setStore(Store<MyBean> store) {
-                if (reference.compareAndSet(null, store)) return;
-                throw new IllegalStateException("Injected multiple times");
-            }
-        });
-
-        assertNotNull(reference.get());
-        assertSame(store, reference.get());
-
+        final MyBean bean = store.create();
+        assertNotNull(bean, "Null bean created");
+        assertNotNull(created.get(), "No bean passed to creator");
+        assertSame(bean, created.get());
     }
 
-    public interface MyBean extends Document {
-        public void setString(String string);
-        public String getString();
-    }
+    public interface MyBean extends Document {}
 }
