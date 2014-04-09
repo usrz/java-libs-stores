@@ -17,6 +17,9 @@ package org.usrz.libs.stores.inject;
 
 import static org.usrz.libs.stores.inject.MongoIndexBuilder.Type.ASCENDING;
 import static org.usrz.libs.stores.inject.MongoIndexBuilder.Type.DESCENDING;
+import static org.usrz.libs.utils.Check.notNull;
+
+import java.time.Duration;
 
 public interface MongoIndexBuilder {
 
@@ -46,4 +49,9 @@ public interface MongoIndexBuilder {
 
     public MongoIndexBuilder sparse(boolean sparse);
 
+    default MongoIndexBuilder expiresAfter(Duration duration) {
+        return expiresAfterSeconds(notNull(duration, "Null duration").getSeconds());
+    }
+
+    public MongoIndexBuilder expiresAfterSeconds(long seconds);
 }

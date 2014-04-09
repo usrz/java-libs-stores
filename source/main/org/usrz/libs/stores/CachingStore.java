@@ -70,4 +70,11 @@ public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
         });
     }
 
+    @Override
+    public NotifyingFuture<Boolean> deleteAsync(UUID uuid) {
+        /* Simple, invalidate cache and return */
+        cache.invalidate(uuid);
+        return store.deleteAsync(uuid);
+    }
+
 }

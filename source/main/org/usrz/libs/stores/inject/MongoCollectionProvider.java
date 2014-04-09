@@ -90,6 +90,11 @@ public class MongoCollectionProvider implements Provider<DBCollection> {
                 return this;
             }
 
+            @Override
+            public MongoIndexBuilder expiresAfterSeconds(long seconds) {
+                options.put("expireAfterSeconds", seconds);
+                return this;
+            }
         };
     }
 

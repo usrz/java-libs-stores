@@ -35,6 +35,10 @@ public interface Store<D extends Document> {
 
     public NotifyingFuture<D> storeAsync(D object);
 
+    public boolean delete(UUID uuid);
+
+    public NotifyingFuture<Boolean> deleteAsync(UUID uuid);
+
     public Query<D> query();
 
     public Query.Operator<D> query(String field);

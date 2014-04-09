@@ -32,6 +32,11 @@ public abstract class AbstractStore<D extends Document> implements Store<D> {
     }
 
     @Override
+    public final boolean delete(UUID uuid) {
+        return Futures.getUnchecked(deleteAsync(uuid));
+    }
+
+    @Override
     public final Query.Operator<D> query(String field) {
         return this.query().and(field);
     }

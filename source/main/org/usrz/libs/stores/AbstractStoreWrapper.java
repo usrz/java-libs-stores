@@ -55,6 +55,11 @@ public class AbstractStoreWrapper<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
+    public NotifyingFuture<Boolean> deleteAsync(UUID uuid) {
+        return store.deleteAsync(uuid);
+    }
+
+    @Override
     public Query<D> query() {
         return store.query();
     }
