@@ -92,7 +92,9 @@ public class MongoCollectionProvider implements Provider<DBCollection> {
 
             @Override
             public MongoIndexBuilder expiresAfterSeconds(long seconds) {
-                options.put("expireAfterSeconds", seconds);
+                if ((seconds > Integer.MAX_VALUE) || (seconds < 0))
+                    throw new IllegalArgumentException("Invalid expiration: " + seconds + " seconds");
+                options.put("expireAfterSeconds", (int) seconds);
                 return this;
             }
         };
