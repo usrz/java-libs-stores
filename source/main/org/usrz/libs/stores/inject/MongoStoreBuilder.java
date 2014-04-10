@@ -66,25 +66,29 @@ public class MongoStoreBuilder<D extends Document> {
         return collection.requireIndex();
     }
 
-    public void createIndex(Consumer<MongoIndexBuilder> consumer) {
+    public MongoStoreBuilder<D> withIndex(Consumer<MongoIndexBuilder> consumer) {
         consumer.accept(createIndex());
+        return this;
     }
 
-    public void withBeanDetails(Class<?> type, Class<?>... interfaces) {
+    public MongoStoreBuilder<D> withBeanDetails(Class<?> type, Class<?>... interfaces) {
         this.bean.setBeanDetails(type, interfaces);
+        return this;
     }
 
-    public void withCache(Cache<UUID, D> cache) {
+    public MongoStoreBuilder<D> withCache(Cache<UUID, D> cache) {
         @SuppressWarnings("unchecked")
         final TypeLiteral<Cache<UUID, D>> cacheType = (TypeLiteral<Cache<UUID, D>>)
                 TypeLiteral.get(Types.newParameterizedType(Cache.class, UUID.class, type.getType()));
         binder.bind(cacheType).toInstance(cache);
+        return this;
     }
 
-    public void withCreator(Function<D, ? extends D> function) {
+    public MongoStoreBuilder<D> withCreator(Function<D, ? extends D> function) {
         @SuppressWarnings("unchecked")
         final TypeLiteral<Function<D, ? extends D>> functionType = (TypeLiteral<Function<D, ? extends D>>)
                 TypeLiteral.get(Types.newParameterizedType(Function.class, type.getType(), type.getType()));
         binder.bind(functionType).toInstance(function);
+        return this;
     }
 }
