@@ -64,6 +64,12 @@ public class MongoBuilder {
 
     /* ====================================================================== */
 
+    public Binder binder() {
+        return binder;
+    }
+
+    /* ====================================================================== */
+
     public void configure(Configurations configurations) {
         /* Bind our configurations */
         binder.bind(Configurations.class).annotatedWith(unique).toInstance(configurations);
