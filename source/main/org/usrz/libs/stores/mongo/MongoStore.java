@@ -87,7 +87,7 @@ public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
 
     @Override
     public NotifyingFuture<Boolean> deleteAsync(UUID uuid) {
-        return executor.call(() -> (collection.remove(null).getN() != 0));
+        return executor.call(() -> (collection.remove(new BasicDBObject("_id", uuid)).getN() != 0));
     }
 
     /* ====================================================================== */
