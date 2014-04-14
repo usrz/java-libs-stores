@@ -145,13 +145,19 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
          * been specified in the type annotation, and something reading
          * our object
          */
-        consumer = (consumer == null ? defaults : consumer.andThen(defaults))
-                .andThen((initializer) -> {
-                    object.keySet().forEach((key) -> {
-                        final Object value = object.get(key);
-                        if ("_id".equals(key)) key = "uuid";
-                        initializer.property(key, value);
-                    });
+        if (consumer != null) {
+            injector.injectMembers(consumer);
+            consumer = consumer.andThen(defaults);
+        } else {
+            consumer = defaults;
+        }
+
+        consumer = consumer.andThen((initializer) -> {
+            object.keySet().forEach((key) -> {
+                final Object value = object.get(key);
+                if ("_id".equals(key)) key = "uuid";
+                initializer.property(key, value);
+            });
         });
 
         try {

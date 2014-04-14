@@ -41,6 +41,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.mongodb.DB;
 
@@ -106,9 +107,18 @@ public class StoreDefaultsTest extends AbstractTest {
     throws Exception {
         assertNotNull(store, "Null store");
 
-        final MyBean bean = store.create((init) -> {
-            init.property("nullable", "not a null string");
+        /* Use an object, so we can see it's injected */
+        final MyBean bean = store.create(new Consumer<Initializer>() {
+
+            @Inject Injector injector;
+
+            @Override
+            public void accept(Initializer initializer) {
+                if (injector == null) throw new IllegalStateException("Not injected");
+                initializer.property("nullable", "not a null string");
+            }
         });
+
         assertNotNull(bean, "Null bean created");
 
         assertEquals(bean.getSensibleDefault(), "a sensible default");
@@ -166,8 +176,11 @@ public class StoreDefaultsTest extends AbstractTest {
 
     public static class MyInitializer implements Consumer<Initializer> {
 
+        @Inject Injector injector;
+
         @Override
         public void accept(Initializer initializer) {
+            if (injector == null) throw new IllegalStateException("Not injected");
             initializer.property("sensible", "a sensible default")
                        .property("uuid", uuid) // this should be overridden!
                        .inject("map", new TypeLiteral<Map<String, Integer>>(){});
