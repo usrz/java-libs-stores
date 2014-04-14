@@ -21,9 +21,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
+import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
@@ -32,24 +35,41 @@ import org.usrz.libs.testing.IO;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
+import com.mongodb.DB;
 
 
 public class InjectionTest extends AbstractTest {
 
+    private static final String collection = UUID.randomUUID().toString();
+    private static final Log log = new Log();
+
+    @Inject private Store<MyBean> store;
+    @Inject private DB db;
+    @Inject private Injector injector;
+
+    @BeforeClass
+    public void initialize()
+    throws Exception {
+        final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
+
+        Guice.createInjector(MongoBuilder.apply((builder) -> {
+            builder.configure(configurations.strip("mongo"));
+            builder.store(MyBean.class, collection);
+        })).injectMembers(this);
+    }
+
+    @AfterClass(alwaysRun=true)
+    public void destroy()
+    throws Exception {
+        if (db != null) {
+            log.info("Dropping collection %s.%s", db.getName(), collection);
+            db.getCollection(collection).drop();
+        }
+    }
+
     @Test
     public void testInjection()
     throws IOException {
-        final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
-
-
-        final Injector injector = Guice.createInjector(MongoBuilder.apply((builder) -> {
-            builder.configure(configurations.strip("mongo"));
-            builder.store(MyBean.class, UUID.randomUUID().toString());
-        }));
-
-        final Store<MyBean> store = injector.getInstance(Key.get(new TypeLiteral<Store<MyBean>>(){}));
         assertNotNull(store);
 
         final AtomicReference<Store<MyBean>> reference = new AtomicReference<>();

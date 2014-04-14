@@ -42,10 +42,5 @@ public class BSonMapperTest extends AbstractTest {
 
         assertNotSame(read, bean);
         assertEquals(read, bean);
-
-        System.err.println(object);
     }
-
-
-
 }

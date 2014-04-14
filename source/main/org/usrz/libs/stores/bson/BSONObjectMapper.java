@@ -26,6 +26,7 @@ import org.bson.BSONObject;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -77,6 +78,12 @@ public class BSONObjectMapper extends ObjectMapper {
     throws JsonProcessingException, IOException {
         return readBSON(reader(type), object, type);
     }
+
+    public <T> T readValue(BSONObject object, InjectableValues injectables, Class<T> type)
+    throws JsonProcessingException, IOException {
+        return readBSON(reader(type).with(injectables), object, type);
+    }
+
 
     public <T> T readValueWithView(BSONObject object, Class<T> type, Class<?> view)
     throws JsonProcessingException, IOException {

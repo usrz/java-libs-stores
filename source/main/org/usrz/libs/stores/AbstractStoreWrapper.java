@@ -18,7 +18,9 @@ package org.usrz.libs.stores;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
+import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.utils.concurrent.NotifyingFuture;
 
 public class AbstractStoreWrapper<D extends Document> extends AbstractStore<D> {
@@ -40,8 +42,8 @@ public class AbstractStoreWrapper<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public D create() {
-        return store.create();
+    public D create(Consumer<Initializer> consumer) {
+        return store.create(consumer);
     }
 
     @Override

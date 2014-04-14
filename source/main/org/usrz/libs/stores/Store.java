@@ -16,7 +16,9 @@
 package org.usrz.libs.stores;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
+import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.utils.concurrent.NotifyingFuture;
 
 public interface Store<D extends Document> {
@@ -26,6 +28,8 @@ public interface Store<D extends Document> {
     public Class<D> getType();
 
     public D create();
+
+    public D create(Consumer<Initializer> consumer);
 
     public D find(UUID uuid);
 

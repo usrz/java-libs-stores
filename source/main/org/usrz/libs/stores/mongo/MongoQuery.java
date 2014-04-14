@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Query;
 import org.usrz.libs.utils.concurrent.Acceptor;
 import org.usrz.libs.utils.concurrent.NotifyingFuture;
@@ -27,7 +28,7 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.QueryOperators;
 
-public abstract class MongoQuery<D extends MongoDocument> implements Query<D> {
+public abstract class MongoQuery<D extends Document> implements Query<D> {
 
     protected final BasicDBObject query;
 

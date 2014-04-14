@@ -17,9 +17,14 @@ package org.usrz.libs.stores.mongo;
 
 import java.util.UUID;
 
+import javax.inject.Inject;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
+import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
@@ -29,27 +34,42 @@ import org.usrz.libs.utils.caches.Cache;
 import org.usrz.libs.utils.caches.SimpleCache;
 
 import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
-
-
+import com.mongodb.DB;
 
 public class CachingTest extends AbstractTest {
 
-    @Test
-    public void testInjection()
+    private static final String collection = UUID.randomUUID().toString();
+    private static final Log log = new Log();
+
+    @Inject private Store<MyBean> store;
+    @Inject private Cache<UUID, MyBean> cache;
+    @Inject private DB db;
+
+    @BeforeClass
+    public void initialize()
     throws Exception {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
         final Cache<UUID, MyBean> cache = new SimpleCache<>();
 
-        final Injector injector = Guice.createInjector(MongoBuilder.apply((builder) -> {
+        Guice.createInjector(MongoBuilder.apply((builder) -> {
             builder.configure(configurations.strip("mongo"));
-            builder.store(MyBean.class, UUID.randomUUID().toString())
+            builder.store(MyBean.class, collection)
                    .withCache(cache);
-        }));
+        })).injectMembers(this);
+    }
 
-        final Store<MyBean> store = injector.getInstance(Key.get(new TypeLiteral<Store<MyBean>>(){}));
+    @AfterClass(alwaysRun=true)
+    public void destroy()
+    throws Exception {
+        if (db != null) {
+            log.info("Dropping collection %s.%s", db.getName(), collection);
+            db.getCollection(collection).drop();
+        }
+    }
+
+    @Test
+    public void testInjection()
+    throws Exception {
         assertNotNull(store, "Null store");
 
         final MyBean bean = store.create();

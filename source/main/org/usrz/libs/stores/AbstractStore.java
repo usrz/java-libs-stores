@@ -22,6 +22,11 @@ import com.google.common.util.concurrent.Futures;
 public abstract class AbstractStore<D extends Document> implements Store<D> {
 
     @Override
+    public final D create() {
+        return create((initializer) -> {});
+    }
+
+    @Override
     public final D find(UUID uuid) {
         return Futures.getUnchecked(findAsync(uuid));
     }

@@ -25,8 +25,8 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.mongo.MongoDocument;
 import org.usrz.libs.utils.Injections;
 import org.usrz.libs.utils.beans.BeanBuilder;
 
@@ -59,7 +59,7 @@ public class MongoBeanClassProvider<D extends Document> implements Provider<Clas
 
         /* Determine what to do (abstract class or interface? */
         if (type.isInterface()) {
-            this.type = MongoDocument.class;
+            this.type = AbstractDocument.class;
             this.interfaces.add(type);
         } else {
             this.type = type;
@@ -87,8 +87,8 @@ public class MongoBeanClassProvider<D extends Document> implements Provider<Clas
         /* Verify that the class we created is <D> and MongoDocument */
         if (!original.isAssignableFrom(bean))
             throw new IllegalArgumentException("Constructed bean does not extendd required class " + original.getName());
-        if (!MongoDocument.class.isAssignableFrom(bean))
-            throw new IllegalArgumentException("Constructed bean does not extendd required class " + MongoDocument.class.getName());
+        if (!Document.class.isAssignableFrom(bean))
+            throw new IllegalArgumentException("Constructed bean does not extendd Document class");
 
         /* Done */
         this.bean = (Class<D>) bean;

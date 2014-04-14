@@ -15,22 +15,51 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import static org.usrz.libs.utils.Check.notNull;
+import static java.lang.Integer.toHexString;
 
-import java.util.function.Function;
+import java.util.UUID;
 
-public class CreatorStore<D extends Document> extends AbstractStoreWrapper<D> {
+import org.usrz.libs.utils.Check;
 
-    private final Function<D, ? extends D> function;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    public CreatorStore(Store<D> store, Function<D, ? extends D> function) {
-        super(store);
-        this.function = notNull(function, "Null function");
+public abstract class AbstractDocument implements Document {
+
+    private final UUID uuid;
+
+    @JsonCreator
+    protected AbstractDocument(@JsonProperty("uuid") UUID uuid) {
+        this.uuid = Check.notNull(uuid, "Null UUID");
     }
 
     @Override
-    public D create() {
-        return function.apply(store.create());
+    public final UUID getUUID() {
+        return uuid;
     }
 
+    /* ====================================================================== */
+
+    @Override
+    public String toString() {
+        return getClass().getName() + "[" + getUUID() + "]@" + toHexString(hashCode());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode() ^ getUUID().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (object == this) return true;
+        try {
+            final Document document = (Document) object;
+            return document.getClass().equals(getClass())
+                && document.getUUID().equals(getUUID());
+        } catch (ClassCastException exception) {
+            return false;
+        }
+    }
 }

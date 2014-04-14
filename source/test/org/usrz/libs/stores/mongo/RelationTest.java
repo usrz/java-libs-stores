@@ -174,8 +174,8 @@ public class RelationTest extends AbstractTest {
 
     /* ====================================================================== */
 
-    private static interface Foo extends Document {}
+    public static interface Foo extends Document {}
 
-    private static interface Bar extends Document {}
+    public static interface Bar extends Document {}
 
 }

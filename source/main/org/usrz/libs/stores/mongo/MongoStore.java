@@ -15,42 +15,52 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import static org.usrz.libs.utils.Check.notNull;
+
 import java.io.IOException;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import org.usrz.libs.stores.AbstractStore;
+import org.usrz.libs.stores.Defaults;
+import org.usrz.libs.stores.Defaults.Initializer;
+import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Query;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.concurrent.Acceptor;
 import org.usrz.libs.utils.concurrent.NotifyingFuture;
 import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
+import com.fasterxml.jackson.databind.InjectableValues;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 
-public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
+
+public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     private final SimpleExecutor executor;
     private final DBCollection collection;
     private final BSONObjectMapper mapper;
     private final Injector injector;
     private final Class<D> type;
+    private final Consumer<Initializer> defaults;
 
     public MongoStore(SimpleExecutor executor,
                       BSONObjectMapper mapper,
                       Injector injector,
                       DBCollection collection,
                       Class<D> type) {
+        this.defaults = injector.getInstance(Defaults.Finder.find(type));
         this.collection = collection;
         this.executor = executor;
         this.injector = injector;
         this.mapper = mapper;
         this.type = type;
-        mapper.addMixInAnnotations(type, MongoDocumentMixIn.class);
     }
 
     @Override
@@ -64,30 +74,32 @@ public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
     }
 
     @Override
-    public D create() {
-        final BasicDBObject object = new BasicDBObject();
-        object.put("_id", UUID.randomUUID());
-        return convert(object);
+    public D create(Consumer<Initializer> consumer) {
+        return convert(id(UUID.randomUUID()), consumer);
     }
 
     @Override
     public NotifyingFuture<D> findAsync(UUID uuid) {
         return executor.call(() -> {
-            return convert(collection.findOne(new BasicDBObject("_id", uuid)));
+            return convert(collection.findOne(id(uuid)), null);
         });
     }
 
     @Override
     public NotifyingFuture<D> storeAsync(D object) {
         return executor.call(() -> {
-            collection.save(mapper.writeValueAsBson(object));
+            final BasicDBObject bson = mapper.writeValueAsBson(object);
+            if (bson.containsField("uuid")) {
+                bson.put("_id", bson.remove("uuid"));
+            }
+            collection.save(bson);
             return object;
         });
     }
 
     @Override
     public NotifyingFuture<Boolean> deleteAsync(UUID uuid) {
-        return executor.call(() -> (collection.remove(new BasicDBObject("_id", uuid)).getN() != 0));
+        return executor.call(() -> (collection.remove(id(uuid)).getN() != 0));
     }
 
     /* ====================================================================== */
@@ -107,7 +119,7 @@ public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
 
                         /* Get our DB cursor and iterate over it */
                         final DBCursor cursor = collection.find(query);
-                        cursor.forEach((object) -> acceptor.accept(convert(object)));
+                        cursor.forEach((object) -> acceptor.accept(convert(object, null)));
                         acceptor.completed();
                     } catch (Throwable throwable) {
                         acceptor.failed(throwable);
@@ -119,15 +131,67 @@ public class MongoStore<D extends MongoDocument> extends AbstractStore<D> {
 
     /* ====================================================================== */
 
-    private D convert(DBObject object) {
+    private BasicDBObject id(UUID uuid) {
+        return new BasicDBObject("_id", notNull(uuid, "Null UUID"));
+    }
+
+    /* ====================================================================== */
+
+    private D convert(DBObject object, Consumer<Initializer> consumer) {
         if (object == null) return null;
 
+        /*
+         * Build our consumer, composing what's been given to us, what's
+         * been specified in the type annotation, and something reading
+         * our object
+         */
+        consumer = (consumer == null ? defaults : consumer.andThen(defaults))
+                .andThen((initializer) -> {
+                    object.keySet().forEach((key) -> {
+                        final Object value = object.get(key);
+                        if ("_id".equals(key)) key = "uuid";
+                        initializer.property(key, value);
+                    });
+        });
+
         try {
-            final D document = mapper.readValue(object, type);
+            /* Create an initializer and build our BSON + injectables */
+            final BSONInitializer initializer = new BSONInitializer();
+            consumer.accept(initializer);
+
+            /* Map the constructed BSON to the object */
+            final BasicDBObject bson = initializer.bson;
+            final InjectableValues injectables = initializer.inject;
+            final D document = mapper.readValue(bson, injectables, type);
+
+            /* Just in case of some @Inject ... */
             injector.injectMembers(document);
+
+            /* Done... */
             return document;
         } catch (IOException exception) {
             throw new MongoException("Exception mapping BSON to " + type.getName(), exception);
         }
+    }
+
+    /* ====================================================================== */
+
+    private final class BSONInitializer implements Initializer {
+
+        final BasicDBObject bson = new BasicDBObject();
+        final InjectableValues.Std inject = new InjectableValues.Std();
+
+        @Override
+        public Initializer property(String name, Object value) {
+            bson.put(name, value);
+            return this;
+        }
+
+        @Override
+        public Initializer inject(String name, Key<?> key) {
+            inject.addValue(notNull(name, "Null name"), injector.getInstance(key));
+            return this;
+        }
+
     }
 }

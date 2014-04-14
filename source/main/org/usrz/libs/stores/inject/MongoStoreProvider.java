@@ -17,14 +17,12 @@ package org.usrz.libs.stores.inject;
 
 import java.lang.annotation.Annotation;
 import java.util.UUID;
-import java.util.function.Function;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.CachingStore;
-import org.usrz.libs.stores.CreatorStore;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
@@ -69,14 +67,6 @@ implements Provider<Store<D>> {
         /* Create the basic store */
         store = new MongoStore(executor, mapper, injector, collection, beanClass);
         log.info("Created Store<%s> in collection %s", type, collection.getName());
-
-        /* Caches */
-        final TypeLiteral<Function<D, ? extends D>> functionType = (TypeLiteral<Function<D, ? extends D>>) TypeLiteral.get(Types.newParameterizedType(Function.class, type.getType(), type.getType()));
-        final Function<D, ? extends D> function = Injections.getInstance(injector, Key.get(functionType), true);
-        if (function != null) {
-            store = new CreatorStore<D>(store, function);
-            log.info("Customising creation on Store<%s> with function %s", type, function);
-        }
 
         /* Caches */
         final TypeLiteral<Cache<UUID, D>> cacheType = (TypeLiteral<Cache<UUID, D>>) TypeLiteral.get(Types.newParameterizedType(Cache.class, UUID.class, type.getType()));

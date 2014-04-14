@@ -29,14 +29,8 @@ public class MongoDatabaseProvider extends ConfigurableProvider<DB, MongoDatabas
 
     @Override
     public DB get() {
-        try {
-            final MongoClient client = Injections.getInstance(injector, this.key(MongoClient.class));
-            final String database = configurations.requireString("database");
-            return client.getDB(database);
-        } catch (IllegalStateException exception) {
-            System.err.println("FOOO ON " + System.identityHashCode(this));
-            throw exception;
-        }
+        final MongoClient client = Injections.getInstance(injector, this.key(MongoClient.class));
+        final String database = configurations.requireString("database");
+        return client.getDB(database);
     }
-
 }

@@ -25,12 +25,14 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
+import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
@@ -102,7 +104,12 @@ public class MongoStoreTest extends AbstractTest {
 
     /* ====================================================================== */
 
-    public static abstract class ReferencingBean extends MongoDocument {
+    public static abstract class ReferencingBean extends AbstractDocument {
+
+        @JsonCreator
+        protected ReferencingBean(@JsonProperty("uuid") UUID uuid) {
+            super(uuid);
+        }
 
         private Store<ReferencedBean> store;
         private ReferencedBean bean;
