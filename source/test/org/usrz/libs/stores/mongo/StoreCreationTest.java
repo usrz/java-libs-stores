@@ -37,20 +37,24 @@ import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.RandomString;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.mongodb.DB;
 
-public class StoreDefaultsTest extends AbstractTest {
+public class StoreCreationTest extends AbstractTest {
 
+    private static final Id id = new Id(new byte[20]);
     private static final String collection = RandomString.get(16);
     private static final Log log = new Log();
 
     @Inject private DB db;
     @Inject private Store<MyBean> store;
+    @Inject private Map<String, Integer> map;
 
     @BeforeClass
     public void initialize()
@@ -77,86 +81,110 @@ public class StoreDefaultsTest extends AbstractTest {
     throws Exception {
         assertNotNull(store, "Null store");
 
-        final MyBean bean = store.create((i) -> i.property("extra", "something extra"));
+        final MyBean bean = store.create();
         assertNotNull(bean, "Null bean created");
 
-        assertEquals(bean.init, "initialized");
-        assertEquals(bean.state, "created");
-        assertEquals(bean.value, null);
-        assertEquals(bean.extra, "something extra");
+        assertEquals(bean.getSensibleDefault(), "a sensible default");
+        assertNotEquals(bean.getId(), id);
+        assertNull(bean.nullable);
+        assertSame(bean.map, map);
 
-        bean.value = "the value to store";
+        bean.setSensibleDefault("we override the default");
 
-        final MyBean stored = store.store(bean);
-        assertNotNull(stored, "Null bean stored");
+        store.store(bean);
 
-        assertEquals(stored.init, "initialized");
-        assertEquals(stored.state, "created");
-        assertEquals(stored.value, "the value to store");
-        assertEquals(stored.extra, "something extra");
+        final MyBean bean2 = store.find(bean.getId());
+        assertNotNull(bean2, "Null bean created");
 
-        final MyBean fetched = store.find(stored.getId());
-        assertNotNull(fetched, "Null bean fetched");
-
-        assertEquals(fetched.init, "initialized");
-        assertEquals(fetched.state, "updated");
-        assertEquals(fetched.value, "the value to store");
-        assertEquals(fetched.extra, null);
+        assertEquals(bean2.getSensibleDefault(), "we override the default");
+        assertEquals(bean2.getId(), bean.getId());
+        assertNull(bean.nullable);
+        assertSame(bean.map, map);
 
     }
 
-    @Defaults(value=MyInitializer.class, create=MyCreator.class, update=MyUpdater.class)
+    @Test
+    public void testDefaultsOverride()
+    throws Exception {
+        assertNotNull(store, "Null store");
+
+        /* Use an object, so we can see it's injected */
+        final MyBean bean = store.create(new Consumer<Initializer>() {
+
+            @Inject Injector injector;
+
+            @Override
+            public void accept(Initializer initializer) {
+                if (injector == null) throw new IllegalStateException("Not injected");
+                initializer.property("nullable", "not a null string");
+            }
+        });
+
+        assertNotNull(bean, "Null bean created");
+
+        assertEquals(bean.getSensibleDefault(), "a sensible default");
+        assertNotEquals(bean.getId(), id);
+        assertEquals(bean.nullable, "not a null string");
+        assertSame(bean.map, map);
+
+        bean.setSensibleDefault("we override the default");
+
+        store.store(bean);
+
+        final MyBean bean2 = store.find(bean.getId());
+        assertNotNull(bean2, "Null bean created");
+
+        assertEquals(bean2.getSensibleDefault(), "we override the default");
+        assertEquals(bean2.getId(), bean.getId());
+        assertEquals(bean.nullable, "not a null string");
+        assertSame(bean.map, map);
+
+    }
+
+    @Defaults(MyInitializer.class)
     public static abstract class MyBean extends AbstractDocument {
 
-        @JsonIgnore private final String init;
-        @JsonIgnore private final String state;
-        @JsonIgnore private final String extra;
-        @JsonIgnore private String value;
+        private String sensible;
+        private final String nullable;
+        private final Map<String, Integer> map;
 
         @JsonCreator
         public MyBean(@JsonProperty("id") Id id,
-                      @JsonProperty("init") String init,
-                      @JsonProperty("state") String state,
-                      @JsonProperty("extra") String extra,
-                      @JsonProperty("value") String value) {
+                      @JsonProperty("sensible") String sensible,
+                      @JsonProperty("nullable") String nullable,
+                      @JacksonInject("map") Map<String, Integer> map) {
             super(id);
-            this.init = init;
-            this.state = state;
-            this.value = value;
-            this.extra = extra;
+            this.sensible = sensible;
+            this.nullable = nullable;
+            this.map = map;
         }
 
-        @JsonProperty("value")
+        @JsonProperty("sensible")
         public String getSensibleDefault() {
-            return value;
+            return sensible;
         }
 
+        @JsonProperty("nullable")
+        public String getNullableDefault() {
+            return nullable;
+        }
+
+        @JsonIgnore
+        public void setSensibleDefault(String sensible) {
+            this.sensible = sensible;
+        }
     }
 
     public static class MyInitializer implements Consumer<Initializer> {
 
-        @Override
-        public void accept(Initializer initializer) {
-            initializer.property("init", "initialized");
-            initializer.property("state", "initialized"); // this will be overridden!
-        }
-
-    }
-
-    public static class MyCreator implements Consumer<Initializer> {
+        @Inject Injector injector;
 
         @Override
         public void accept(Initializer initializer) {
-            initializer.property("state", "created");
-        }
-
-    }
-
-    public static class MyUpdater implements Consumer<Initializer> {
-
-        @Override
-        public void accept(Initializer initializer) {
-            initializer.property("state", "updated");
+            if (injector == null) throw new IllegalStateException("Not injected");
+            initializer.property("sensible", "a sensible default")
+                       .property("id", id) // this should be overridden!
+                       .inject("map", new TypeLiteral<Map<String, Integer>>(){});
         }
 
     }

@@ -48,14 +48,16 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     private final BSONObjectMapper mapper;
     private final Injector injector;
     private final Class<D> type;
-    private final Consumer<Initializer> defaults;
+    private final Consumer<Initializer> creator;
+    private final Consumer<Initializer> updater;
 
     public MongoStore(SimpleExecutor executor,
                       BSONObjectMapper mapper,
                       Injector injector,
                       DBCollection collection,
                       Class<D> type) {
-        this.defaults = injector.getInstance(Defaults.Finder.find(type));
+        creator = Defaults.Finder.find(type, injector, true);
+        updater = Defaults.Finder.find(type, injector, false);
         this.collection = collection;
         this.executor = executor;
         this.injector = injector;
@@ -70,13 +72,24 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     @Override
     public D create(Consumer<Initializer> consumer) {
-        return convert(id(new Id()), consumer);
+
+        /*
+         * Build our consumer, composing what's been given to us, what's
+         * been specified in the type annotation, and something reading
+         * our object
+         */
+        if (consumer != null) {
+            injector.injectMembers(consumer);
+            return convert(id(new Id()), consumer.andThen(creator));
+        } else {
+            return convert(id(new Id()), creator);
+        }
     }
 
     @Override
     public NotifyingFuture<D> findAsync(Id id) {
         return executor.call(() -> {
-            return convert(collection.findOne(id(id)), null);
+            return convert(collection.findOne(id(id)), updater);
         });
     }
 
@@ -114,7 +127,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
                         /* Get our DB cursor and iterate over it */
                         final DBCursor cursor = collection.find(query);
-                        cursor.forEach((object) -> acceptor.accept(convert(object, null)));
+                        cursor.forEach((object) -> acceptor.accept(convert(object, updater)));
                         acceptor.completed();
                     } catch (Throwable throwable) {
                         acceptor.failed(throwable);
@@ -134,18 +147,6 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     private D convert(DBObject object, Consumer<Initializer> consumer) {
         if (object == null) return null;
-
-        /*
-         * Build our consumer, composing what's been given to us, what's
-         * been specified in the type annotation, and something reading
-         * our object
-         */
-        if (consumer != null) {
-            injector.injectMembers(consumer);
-            consumer = consumer.andThen(defaults);
-        } else {
-            consumer = defaults;
-        }
 
         consumer = consumer.andThen((initializer) -> {
             object.keySet().forEach((key) -> {

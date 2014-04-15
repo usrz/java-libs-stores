@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
+import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 
@@ -42,8 +43,23 @@ import com.google.inject.TypeLiteral;
 @Retention(RUNTIME)
 public @interface Defaults {
 
-    /** The {@link Consumer} for initialization. */
-    Class<? extends Consumer<Initializer>> value();
+    /**
+     * The {@link Consumer} for initialization used both for creation and
+     * retrieval of {@link Document}s.
+     */
+    Class<? extends Consumer<Initializer>> value() default Finder.Null.class;
+
+    /**
+     * The {@link Consumer} for initialization used for creation of new
+     * {@link Document}s.
+     */
+    Class<? extends Consumer<Initializer>> create() default Finder.Null.class;
+
+    /**
+     * The {@link Consumer} for initialization used for retrieval of existing
+     * {@link Document}s.
+     */
+    Class<? extends Consumer<Initializer>> update() default Finder.Null.class;
 
     /* ===================================================================== */
 
@@ -92,6 +108,8 @@ public @interface Defaults {
      */
     public static final class Finder {
 
+        private static final Null NULL = new Null();
+
         private static final class Null implements Consumer<Initializer> {
             @Override public void accept(Initializer i) {}
         }
@@ -103,17 +121,21 @@ public @interface Defaults {
         /**
          * Find the {@link Defaults} annotation value for a {@link Document}.
          */
-        public static final Class<? extends Consumer<Initializer>> find(Class<? extends Document> type) {
+        public static final Consumer<Initializer> find(Class<? extends Document> type, Injector injector, boolean create) {
             final Set<Defaults> defaults = new HashSet<>();
             findDefaults(type, defaults);
-            if (defaults.size() == 0) return Null.class;
+            if (defaults.size() == 0) return NULL;
             if (defaults.size() > 1) {
                 final StringBuilder builder = new StringBuilder("Multiple @Defaults found in class hierarchy for ")
                 .append(type.getName());
                 defaults.forEach((current) -> builder.append("\n    " + current));
                 throw new IllegalArgumentException(builder.toString());
             }
-            return defaults.iterator().next().value();
+            final Defaults annotation = defaults.iterator().next();
+
+            return injector.getInstance(annotation.value()).andThen(
+                       create ? injector.getInstance(annotation.create()) :
+                                injector.getInstance(annotation.update()));
         }
 
         private static void findDefaults(Class<?> type, Set<Defaults> defaults) {
