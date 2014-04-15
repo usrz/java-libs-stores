@@ -64,11 +64,6 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public String getName() {
-        return collection.getName();
-    }
-
-    @Override
     public Class<D> getType() {
         return type;
     }

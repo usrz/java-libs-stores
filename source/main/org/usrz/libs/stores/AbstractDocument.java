@@ -22,6 +22,11 @@ import org.usrz.libs.utils.Check;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * An abstract implementation of the {@link Document} interface.
+ *
+ * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+ */
 public abstract class AbstractDocument implements Document {
 
     private final Id id;

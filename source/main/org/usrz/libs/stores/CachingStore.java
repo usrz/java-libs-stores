@@ -24,6 +24,13 @@ import org.usrz.libs.utils.caches.Cache;
 import org.usrz.libs.utils.concurrent.NotifyingFuture;
 import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
+/**
+ * A {@link Store} capable of <em>caching</em> documents in the wrapped
+ * {@link Cache}.
+ *
+ * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+ * @param <D> The type of {@link Document}s stored by this {@link Store}.
+ */
 public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
 
     private static final Log log = new Log();

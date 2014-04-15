@@ -25,67 +25,105 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 
+/**
+ * An annotation defining a {@link Consumer} for {@link Initializer}s.
+ * <p>
+ * {@link Document} classes can be annotated with this annotation, and the
+ * specified {@link Consumer} will be invoked on creation and retrieval.
+ *
+ * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+ */
 @Documented
 @Target(TYPE)
 @Retention(RUNTIME)
 public @interface Defaults {
 
-     Class<? extends Consumer<Initializer>> value();
+    /** The {@link Consumer} for initialization. */
+    Class<? extends Consumer<Initializer>> value();
 
-     /* ===================================================================== */
+    /* ===================================================================== */
 
-     public interface Initializer {
+    /**
+     * An object which can be {@linkplain Consumer#accept(Object) consumed}
+     * at creation and retrieval of {@link Document}s specifying the default
+     * initialization values.
+     *
+     * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+     */
+    public interface Initializer {
 
-         public Initializer property(String name, Object value);
+        /**
+         * Set the property with the given name to the given value.
+         */
+        public Initializer property(String name, Object value);
 
-         public Initializer inject(String name, Key<?> key);
+        /**
+         * Support for the {@link JacksonInject} annotation and Guice.
+         */
+        public Initializer inject(String name, Key<?> key);
 
-         default Initializer inject(String name, TypeLiteral<?> type) {
-             return inject(name, Key.get(type));
-         }
+        /**
+         * Support for the {@link JacksonInject} annotation and Guice.
+         */
+        default Initializer inject(String name, TypeLiteral<?> type) {
+            return inject(name, Key.get(type));
+        }
 
-         default Initializer inject(String name, Class<?> type) {
-             return inject(name, Key.get(type));
-         }
+        /**
+         * Support for the {@link JacksonInject} annotation and Guice.
+         */
+        default Initializer inject(String name, Class<?> type) {
+            return inject(name, Key.get(type));
+        }
 
-     }
+    }
 
-     /* ===================================================================== */
+    /* ===================================================================== */
 
-     public static final class Finder {
+    /**
+     * A simple utility class finding the {@link Defaults} annotation value
+     * for a {@link Document} class.
+     *
+     * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+     */
+    public static final class Finder {
 
-         private static final class Null implements Consumer<Initializer> {
+        private static final class Null implements Consumer<Initializer> {
             @Override public void accept(Initializer i) {}
-         }
+        }
 
-         private Finder() {
-             throw new IllegalStateException("Do not construct");
-         }
+        private Finder() {
+            throw new IllegalStateException("Do not construct");
+        }
 
-         public static final Class<? extends Consumer<Initializer>> find(Class<?> type) {
-             final Set<Defaults> defaults = new HashSet<>();
-             findDefaults(type, defaults);
-             if (defaults.size() == 0) return Null.class;
-             if (defaults.size() > 1) {
-                 final StringBuilder builder = new StringBuilder("Multiple @Defaults found in class hierarchy for ")
-                                                         .append(type.getName());
-                 defaults.forEach((current) -> builder.append("\n    " + current));
-                 throw new IllegalArgumentException(builder.toString());
-             }
-             return defaults.iterator().next().value();
-         }
+        /**
+         * Find the {@link Defaults} annotation value for a {@link Document}.
+         */
+        public static final Class<? extends Consumer<Initializer>> find(Class<? extends Document> type) {
+            final Set<Defaults> defaults = new HashSet<>();
+            findDefaults(type, defaults);
+            if (defaults.size() == 0) return Null.class;
+            if (defaults.size() > 1) {
+                final StringBuilder builder = new StringBuilder("Multiple @Defaults found in class hierarchy for ")
+                .append(type.getName());
+                defaults.forEach((current) -> builder.append("\n    " + current));
+                throw new IllegalArgumentException(builder.toString());
+            }
+            return defaults.iterator().next().value();
+        }
 
-         private static void findDefaults(Class<?> type, Set<Defaults> defaults) {
-             if (type == null) return;
-             final Defaults current = type.getAnnotation(Defaults.class);
-             if (current != null) defaults.add(current);
-             for (Class<?> interfaceClass: type.getInterfaces())
-                 findDefaults(interfaceClass, defaults);
-             findDefaults(type.getSuperclass(), defaults);
-         }
+        private static void findDefaults(Class<?> type, Set<Defaults> defaults) {
+            if (type == null) return;
+            final Defaults current = type.getAnnotation(Defaults.class);
+            if (current != null) defaults.add(current);
+            for (Class<?> interfaceClass: type.getInterfaces())
+                findDefaults(interfaceClass, defaults);
+            findDefaults(type.getSuperclass(), defaults);
+        }
 
-     }
+    }
 }

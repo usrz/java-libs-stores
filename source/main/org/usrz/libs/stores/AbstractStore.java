@@ -17,6 +17,12 @@ package org.usrz.libs.stores;
 
 import com.google.common.util.concurrent.Futures;
 
+/**
+ * An abstract implementation of the {@link Store} interface.
+ *
+ * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+ * @param <D> The type of {@link Document}s stored by this {@link Store}.
+ */
 public abstract class AbstractStore<D extends Document> implements Store<D> {
 
     @Override

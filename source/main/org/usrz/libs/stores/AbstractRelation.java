@@ -21,6 +21,13 @@ import org.usrz.libs.utils.concurrent.QueuedIterator;
 
 import com.google.common.util.concurrent.Futures;
 
+/**
+ * An abstract implementation of the {@link Relation} interface.
+ *
+ * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+ * @param <L> The type of data stored in the left part of this relation.
+ * @param <R> The type of data stored in the right part of this relation.
+ */
 public abstract class AbstractRelation<L extends Document, R extends Document>
 implements Relation<L, R> {
 

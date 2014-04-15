@@ -17,6 +17,11 @@ package org.usrz.libs.stores;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * The core interface defining a <em>storable</em> object.
+ *
+ * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+ */
 public interface Document {
 
     @JsonProperty("id")
