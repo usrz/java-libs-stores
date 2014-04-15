@@ -195,5 +195,10 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
             return this;
         }
 
+        @Override
+        public Initializer injectInstance(String name, Object instance) {
+            inject.addValue(notNull(name, "Null name"), instance);
+            return this;
+        }
     }
 }

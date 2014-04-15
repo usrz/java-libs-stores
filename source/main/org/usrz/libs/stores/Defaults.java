@@ -80,6 +80,11 @@ public @interface Defaults {
         /**
          * Support for the {@link JacksonInject} annotation and Guice.
          */
+        public Initializer injectInstance(String name, Object instance);
+
+        /**
+         * Support for the {@link JacksonInject} annotation and Guice.
+         */
         public Initializer inject(String name, Key<?> key);
 
         /**
