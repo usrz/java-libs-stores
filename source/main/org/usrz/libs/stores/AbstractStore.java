@@ -15,8 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.UUID;
-
 import com.google.common.util.concurrent.Futures;
 
 public abstract class AbstractStore<D extends Document> implements Store<D> {
@@ -27,8 +25,8 @@ public abstract class AbstractStore<D extends Document> implements Store<D> {
     }
 
     @Override
-    public final D find(UUID uuid) {
-        return Futures.getUnchecked(findAsync(uuid));
+    public final D find(Id id) {
+        return Futures.getUnchecked(findAsync(id));
     }
 
     @Override
@@ -37,8 +35,8 @@ public abstract class AbstractStore<D extends Document> implements Store<D> {
     }
 
     @Override
-    public final boolean delete(UUID uuid) {
-        return Futures.getUnchecked(deleteAsync(uuid));
+    public final boolean delete(Id id) {
+        return Futures.getUnchecked(deleteAsync(id));
     }
 
     @Override

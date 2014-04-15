@@ -18,13 +18,13 @@ package org.usrz.libs.stores.mongo;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.AbstractStore;
 import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.stores.Document;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Query;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.concurrent.Acceptor;
@@ -75,13 +75,13 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     @Override
     public D create(Consumer<Initializer> consumer) {
-        return convert(id(UUID.randomUUID()), consumer);
+        return convert(id(new Id()), consumer);
     }
 
     @Override
-    public NotifyingFuture<D> findAsync(UUID uuid) {
+    public NotifyingFuture<D> findAsync(Id id) {
         return executor.call(() -> {
-            return convert(collection.findOne(id(uuid)), null);
+            return convert(collection.findOne(id(id)), null);
         });
     }
 
@@ -89,8 +89,8 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     public NotifyingFuture<D> storeAsync(D object) {
         return executor.call(() -> {
             final BasicDBObject bson = mapper.writeValueAsBson(object);
-            if (bson.containsField("uuid")) {
-                bson.put("_id", bson.remove("uuid"));
+            if (bson.containsField("id")) {
+                bson.put("_id", bson.remove("id"));
             }
             collection.save(bson);
             return object;
@@ -98,8 +98,8 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public NotifyingFuture<Boolean> deleteAsync(UUID uuid) {
-        return executor.call(() -> (collection.remove(id(uuid)).getN() != 0));
+    public NotifyingFuture<Boolean> deleteAsync(Id id) {
+        return executor.call(() -> (collection.remove(id(id)).getN() != 0));
     }
 
     /* ====================================================================== */
@@ -112,9 +112,9 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
             public NotifyingFuture<?> documentsAsync(Acceptor<D> acceptor) {
                 return executor.run(() -> {
                     try {
-                        /* Normalize alias "uuid" -> "_id" */
-                        if (query.containsKey((Object)"uuid")) {
-                            query.put("_id", query.remove("uuid"));
+                        /* Normalize alias "id" -> "_id" */
+                        if (query.containsKey((Object)"id")) {
+                            query.put("_id", query.remove("id"));
                         }
 
                         /* Get our DB cursor and iterate over it */
@@ -131,8 +131,8 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     /* ====================================================================== */
 
-    private BasicDBObject id(UUID uuid) {
-        return new BasicDBObject("_id", notNull(uuid, "Null UUID"));
+    private BasicDBObject id(Id id) {
+        return new BasicDBObject("_id", notNull(id, "Null ID").toString());
     }
 
     /* ====================================================================== */
@@ -155,7 +155,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         consumer = consumer.andThen((initializer) -> {
             object.keySet().forEach((key) -> {
                 final Object value = object.get(key);
-                if ("_id".equals(key)) key = "uuid";
+                if ("_id".equals(key)) key = "id";
                 initializer.property(key, value);
             });
         });

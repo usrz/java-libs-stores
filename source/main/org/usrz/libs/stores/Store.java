@@ -15,7 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Defaults.Initializer;
@@ -31,17 +30,17 @@ public interface Store<D extends Document> {
 
     public D create(Consumer<Initializer> consumer);
 
-    public D find(UUID uuid);
+    public D find(Id id);
 
-    public NotifyingFuture<D> findAsync(UUID uuid);
+    public NotifyingFuture<D> findAsync(Id id);
 
     public D store(D object);
 
     public NotifyingFuture<D> storeAsync(D object);
 
-    public boolean delete(UUID uuid);
+    public boolean delete(Id id);
 
-    public NotifyingFuture<Boolean> deleteAsync(UUID uuid);
+    public NotifyingFuture<Boolean> deleteAsync(Id id);
 
     public Query<D> query();
 

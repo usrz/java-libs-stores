@@ -16,13 +16,12 @@
 package org.usrz.libs.stores;
 
 import java.util.Iterator;
-import java.util.UUID;
 
 public abstract class DocumentIterator<D extends Document>
 implements Iterator<D> {
 
-    public UUID nextUUID() {
-        return next().getUUID();
+    public Id nextId() {
+        return next().getId();
     }
 
     @Override

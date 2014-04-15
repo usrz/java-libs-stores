@@ -17,7 +17,6 @@ package org.usrz.libs.stores.mongo;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -31,10 +30,12 @@ import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
+import org.usrz.libs.utils.RandomString;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,8 +48,8 @@ import com.mongodb.DB;
 
 public class StoreDefaultsTest extends AbstractTest {
 
-    private static final UUID uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
-    private static final String collection = UUID.randomUUID().toString();
+    private static final Id id = new Id(new byte[20]);
+    private static final String collection = RandomString.get(16);
     private static final Log log = new Log();
 
     @Inject private DB db;
@@ -84,7 +85,7 @@ public class StoreDefaultsTest extends AbstractTest {
         assertNotNull(bean, "Null bean created");
 
         assertEquals(bean.getSensibleDefault(), "a sensible default");
-        assertNotEquals(bean.getUUID(), uuid);
+        assertNotEquals(bean.getId(), id);
         assertNull(bean.nullable);
         assertSame(bean.map, map);
 
@@ -92,11 +93,11 @@ public class StoreDefaultsTest extends AbstractTest {
 
         store.store(bean);
 
-        final MyBean bean2 = store.find(bean.getUUID());
+        final MyBean bean2 = store.find(bean.getId());
         assertNotNull(bean2, "Null bean created");
 
         assertEquals(bean2.getSensibleDefault(), "we override the default");
-        assertEquals(bean2.getUUID(), bean.getUUID());
+        assertEquals(bean2.getId(), bean.getId());
         assertNull(bean.nullable);
         assertSame(bean.map, map);
 
@@ -122,7 +123,7 @@ public class StoreDefaultsTest extends AbstractTest {
         assertNotNull(bean, "Null bean created");
 
         assertEquals(bean.getSensibleDefault(), "a sensible default");
-        assertNotEquals(bean.getUUID(), uuid);
+        assertNotEquals(bean.getId(), id);
         assertEquals(bean.nullable, "not a null string");
         assertSame(bean.map, map);
 
@@ -130,11 +131,11 @@ public class StoreDefaultsTest extends AbstractTest {
 
         store.store(bean);
 
-        final MyBean bean2 = store.find(bean.getUUID());
+        final MyBean bean2 = store.find(bean.getId());
         assertNotNull(bean2, "Null bean created");
 
         assertEquals(bean2.getSensibleDefault(), "we override the default");
-        assertEquals(bean2.getUUID(), bean.getUUID());
+        assertEquals(bean2.getId(), bean.getId());
         assertEquals(bean.nullable, "not a null string");
         assertSame(bean.map, map);
 
@@ -148,11 +149,11 @@ public class StoreDefaultsTest extends AbstractTest {
         private final Map<String, Integer> map;
 
         @JsonCreator
-        public MyBean(@JsonProperty("uuid") UUID uuid,
+        public MyBean(@JsonProperty("id") Id id,
                       @JsonProperty("sensible") String sensible,
                       @JsonProperty("nullable") String nullable,
                       @JacksonInject("map") Map<String, Integer> map) {
-            super(uuid);
+            super(id);
             this.sensible = sensible;
             this.nullable = nullable;
             this.map = map;
@@ -182,7 +183,7 @@ public class StoreDefaultsTest extends AbstractTest {
         public void accept(Initializer initializer) {
             if (injector == null) throw new IllegalStateException("Not injected");
             initializer.property("sensible", "a sensible default")
-                       .property("uuid", uuid) // this should be overridden!
+                       .property("id", id) // this should be overridden!
                        .inject("map", new TypeLiteral<Map<String, Integer>>(){});
         }
 

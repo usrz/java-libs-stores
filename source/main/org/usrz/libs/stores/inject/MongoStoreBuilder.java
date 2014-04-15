@@ -18,11 +18,10 @@ package org.usrz.libs.stores.inject;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.lang.annotation.Annotation;
-import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.usrz.libs.stores.Document;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.utils.caches.Cache;
 
@@ -76,19 +75,12 @@ public class MongoStoreBuilder<D extends Document> {
         return this;
     }
 
-    public MongoStoreBuilder<D> withCache(Cache<UUID, D> cache) {
+    public MongoStoreBuilder<D> withCache(Cache<Id, D> cache) {
         @SuppressWarnings("unchecked")
-        final TypeLiteral<Cache<UUID, D>> cacheType = (TypeLiteral<Cache<UUID, D>>)
-                TypeLiteral.get(Types.newParameterizedType(Cache.class, UUID.class, type.getType()));
+        final TypeLiteral<Cache<Id, D>> cacheType = (TypeLiteral<Cache<Id, D>>)
+                TypeLiteral.get(Types.newParameterizedType(Cache.class, Id.class, type.getType()));
         binder.bind(cacheType).toInstance(cache);
         return this;
     }
 
-    public MongoStoreBuilder<D> withCreator(Function<D, ? extends D> function) {
-        @SuppressWarnings("unchecked")
-        final TypeLiteral<Function<D, ? extends D>> functionType = (TypeLiteral<Function<D, ? extends D>>)
-                TypeLiteral.get(Types.newParameterizedType(Function.class, type.getType(), type.getType()));
-        binder.bind(functionType).toInstance(function);
-        return this;
-    }
 }

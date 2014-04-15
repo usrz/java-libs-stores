@@ -16,7 +16,6 @@
 package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -27,10 +26,12 @@ import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
+import org.usrz.libs.utils.RandomString;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -40,8 +41,8 @@ import com.mongodb.DB;
 
 public class MongoStoreTest extends AbstractTest {
 
-    private final String referencingCollection = UUID.randomUUID().toString();
-    private final String referencedCollection = UUID.randomUUID().toString();
+    private final String referencingCollection = RandomString.get(16);
+    private final String referencedCollection = RandomString.get(16);
 
     @BeforeClass
     public void prepare()
@@ -82,22 +83,22 @@ public class MongoStoreTest extends AbstractTest {
 
         ReferencedBean referencedBean = referencedStore.create();
         referencedStore.store(referencedBean);
-        ReferencedBean referencedBean2 = referencedStore.find(referencedBean.getUUID());
+        ReferencedBean referencedBean2 = referencedStore.find(referencedBean.getId());
 
         assertNotNull(referencedBean2);
         assertNotSame(referencedBean2, referencedBean);
-        assertEquals(referencedBean2.getUUID(), referencedBean.getUUID());
+        assertEquals(referencedBean2.getId(), referencedBean.getId());
 
         ReferencingBean referencingBean = referencingStore.create().withReferenced(referencedBean2);
         referencingStore.store(referencingBean);
 
         assertNotNull(referencingBean.bean);
-        assertNotNull(referencingBean.getReferenceUUID());
+        assertNotNull(referencingBean.getReferenceID());
 
-        ReferencingBean referencingBean2 = referencingStore.find(referencingBean.getUUID());
+        ReferencingBean referencingBean2 = referencingStore.find(referencingBean.getId());
         assertNotNull(referencingBean2);
         assertNull(referencingBean2.bean);
-        assertNotNull(referencingBean2.getReferenceUUID());
+        assertNotNull(referencingBean2.getReferenceID());
         assertNotNull(referencingBean2.getReferenced());
 
     }
@@ -107,8 +108,8 @@ public class MongoStoreTest extends AbstractTest {
     public static abstract class ReferencingBean extends AbstractDocument {
 
         @JsonCreator
-        protected ReferencingBean(@JsonProperty("uuid") UUID uuid) {
-            super(uuid);
+        protected ReferencingBean(@JsonProperty("id") Id id) {
+            super(id);
         }
 
         private Store<ReferencedBean> store;
@@ -116,7 +117,7 @@ public class MongoStoreTest extends AbstractTest {
 
         @JsonIgnore
         public ReferencingBean withReferenced(ReferencedBean bean) {
-            setReferenceUUID(bean.getUUID());
+            setReferenceID(bean.getId());
             this.bean = bean;
             return this;
         }
@@ -124,14 +125,14 @@ public class MongoStoreTest extends AbstractTest {
         @JsonIgnore
         public ReferencedBean getReferenced() {
             if (bean != null) return bean;
-            return bean = store.find(getReferenceUUID());
+            return bean = store.find(getReferenceID());
         }
 
-        @JsonProperty("reference_uuid")
-        public abstract UUID getReferenceUUID();
+        @JsonProperty("reference_id")
+        public abstract Id getReferenceID();
 
-        @JsonProperty("reference_uuid")
-        public abstract void setReferenceUUID(UUID uuid);
+        @JsonProperty("reference_id")
+        public abstract void setReferenceID(Id id);
 
         @Inject
         public void injectStore(Store<ReferencedBean> store) {

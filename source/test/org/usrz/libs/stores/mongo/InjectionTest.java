@@ -16,7 +16,6 @@
 package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
@@ -32,6 +31,7 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
+import org.usrz.libs.utils.RandomString;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,7 +40,7 @@ import com.mongodb.DB;
 
 public class InjectionTest extends AbstractTest {
 
-    private static final String collection = UUID.randomUUID().toString();
+    private static final String collection = RandomString.get(16);
     private static final Log log = new Log();
 
     @Inject private Store<MyBean> store;

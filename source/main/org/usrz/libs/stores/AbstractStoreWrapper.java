@@ -17,7 +17,6 @@ package org.usrz.libs.stores;
 
 import static org.usrz.libs.utils.Check.notNull;
 
-import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Defaults.Initializer;
@@ -47,8 +46,8 @@ public class AbstractStoreWrapper<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public NotifyingFuture<D> findAsync(UUID uuid) {
-        return store.findAsync(uuid);
+    public NotifyingFuture<D> findAsync(Id id) {
+        return store.findAsync(id);
     }
 
     @Override
@@ -57,8 +56,8 @@ public class AbstractStoreWrapper<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public NotifyingFuture<Boolean> deleteAsync(UUID uuid) {
-        return store.deleteAsync(uuid);
+    public NotifyingFuture<Boolean> deleteAsync(Id id) {
+        return store.deleteAsync(id);
     }
 
     @Override

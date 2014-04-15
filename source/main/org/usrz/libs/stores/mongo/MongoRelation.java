@@ -15,10 +15,9 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
-import java.util.UUID;
-
 import org.usrz.libs.stores.AbstractRelation;
 import org.usrz.libs.stores.Document;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.utils.concurrent.Acceptor;
 import org.usrz.libs.utils.concurrent.NotifyingFuture;
@@ -59,12 +58,10 @@ extends AbstractRelation<L, R> {
     }
 
     private BasicDBObject object(L l, R r, boolean full) {
-        final UUID uuidL = l.getUUID();
-        final UUID uuidR = r.getUUID();
-        final BasicDBObject object = new BasicDBObject(ID,
-                new UUID(uuidL.getMostSignificantBits()  ^ uuidR.getMostSignificantBits(),
-                         uuidL.getLeastSignificantBits() ^ uuidR.getLeastSignificantBits()));
-        if (full) object.append(L, uuidL).append(R, uuidR);
+        final Id idL = l.getId();
+        final Id idR = r.getId();
+        final BasicDBObject object = new BasicDBObject(ID, idL.xor(idR).toString());
+        if (full) object.append(L, idL.toString()).append(R, idR.toString());
         return object;
     }
 
@@ -90,14 +87,14 @@ extends AbstractRelation<L, R> {
         return executor.run(() -> {
             try {
                 /* Build our query on "R" returning only "L" */
-                final BasicDBObject query = new BasicDBObject(R, r.getUUID());
+                final BasicDBObject query = new BasicDBObject(R, r.getId().toString());
                 final BasicDBObject fields = new BasicDBObject(L, 1).append(ID, 0);
 
                 /* Get our DB cursor and iterate over it */
                 final DBCursor cursor = collection.find(query, fields);
                 cursor.forEach((object) -> {
                     /* Find *SYNCHRONOUSLY* (we want results in order) */
-                    final L document = storeL.find((UUID) object.get(L));
+                    final L document = storeL.find(new Id((String) object.get(L)));
                     if (document != null) acceptor.accept(document);
                 });
                 acceptor.completed();
@@ -112,14 +109,14 @@ extends AbstractRelation<L, R> {
         return executor.run(() -> {
             try {
                 /* Build our query on "L" returning only "R" */
-                final BasicDBObject query = new BasicDBObject(L, l.getUUID());
+                final BasicDBObject query = new BasicDBObject(L, l.getId().toString());
                 final BasicDBObject fields = new BasicDBObject(R, 1).append(ID, 0);
 
                 /* Get our DB cursor and iterate over it */
                 final DBCursor cursor = collection.find(query, fields);
                 cursor.forEach((object) -> {
                     /* Find *SYNCHRONOUSLY* (we want results in order) */
-                    final R document = storeR.find((UUID) object.get(R));
+                    final R document = storeR.find(new Id((String) object.get(R)));
                     if (document != null) acceptor.accept(document);
                 });
                 acceptor.completed();

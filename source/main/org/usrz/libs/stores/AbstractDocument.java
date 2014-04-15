@@ -17,8 +17,6 @@ package org.usrz.libs.stores;
 
 import static java.lang.Integer.toHexString;
 
-import java.util.UUID;
-
 import org.usrz.libs.utils.Check;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,28 +24,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class AbstractDocument implements Document {
 
-    private final UUID uuid;
+    private final Id id;
 
     @JsonCreator
-    protected AbstractDocument(@JsonProperty("uuid") UUID uuid) {
-        this.uuid = Check.notNull(uuid, "Null UUID");
+    protected AbstractDocument(@JsonProperty("id") Id id) {
+        this.id = Check.notNull(id, "Null ID");
     }
 
     @Override
-    public final UUID getUUID() {
-        return uuid;
+    public final Id getId() {
+        return id;
     }
 
     /* ====================================================================== */
 
     @Override
     public String toString() {
-        return getClass().getName() + "[" + getUUID() + "]@" + toHexString(hashCode());
+        return getClass().getName() + "[" + getId() + "]@" + toHexString(hashCode());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode() ^ getUUID().hashCode();
+        return getClass().hashCode() ^ getId().hashCode();
     }
 
     @Override
@@ -57,7 +55,7 @@ public abstract class AbstractDocument implements Document {
         try {
             final Document document = (Document) object;
             return document.getClass().equals(getClass())
-                && document.getUUID().equals(getUUID());
+                && document.getId().equals(getId());
         } catch (ClassCastException exception) {
             return false;
         }

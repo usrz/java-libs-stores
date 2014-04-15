@@ -15,13 +15,11 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.UUID;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public interface Document {
 
-    @JsonProperty("uuid")
-    public UUID getUUID();
+    @JsonProperty("id")
+    public Id getId();
 
 }

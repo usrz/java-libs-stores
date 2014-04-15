@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -35,15 +34,16 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
+import org.usrz.libs.utils.RandomString;
 
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
 public class RelationTest extends AbstractTest {
 
-    private final String fooCollection = UUID.randomUUID().toString();
-    private final String barCollection = UUID.randomUUID().toString();
-    private final String relCollection = UUID.randomUUID().toString();
+    private final String fooCollection = RandomString.get(16);
+    private final String barCollection = RandomString.get(16);
+    private final String relCollection = RandomString.get(16);
     private final Log log = new Log();
 
     @BeforeClass

@@ -16,7 +16,6 @@
 package org.usrz.libs.stores.inject;
 
 import java.lang.annotation.Annotation;
-import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -24,6 +23,7 @@ import javax.inject.Provider;
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.CachingStore;
 import org.usrz.libs.stores.Document;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.stores.mongo.MongoStore;
@@ -69,8 +69,8 @@ implements Provider<Store<D>> {
         log.info("Created Store<%s> in collection %s", type, collection.getName());
 
         /* Caches */
-        final TypeLiteral<Cache<UUID, D>> cacheType = (TypeLiteral<Cache<UUID, D>>) TypeLiteral.get(Types.newParameterizedType(Cache.class, UUID.class, type.getType()));
-        final Cache<UUID, D> cache = Injections.getInstance(injector, Key.get(cacheType), true);
+        final TypeLiteral<Cache<Id, D>> cacheType = (TypeLiteral<Cache<Id, D>>) TypeLiteral.get(Types.newParameterizedType(Cache.class, Id.class, type.getType()));
+        final Cache<Id, D> cache = Injections.getInstance(injector, Key.get(cacheType), true);
         if (cache != null) {
             store = new CachingStore<D>(executor, store, cache);
             log.info("Enabling cache on Store<%s> with cache %s", type, cache);
