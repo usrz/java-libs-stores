@@ -18,6 +18,7 @@ package org.usrz.libs.stores.mongo;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.AbstractStore;
@@ -127,7 +128,12 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
                         /* Get our DB cursor and iterate over it */
                         final DBCursor cursor = collection.find(query);
-                        cursor.forEach((object) -> acceptor.accept(convert(object, updater)));
+                        final Iterator<DBObject> iterator = cursor.iterator();
+                        while (iterator.hasNext()) {
+                            final D document = convert(iterator.next(), updater);
+                            if (!acceptor.accept(document)) break;
+                        }
+                        cursor.close();
                         acceptor.completed();
                     } catch (Throwable throwable) {
                         acceptor.failed(throwable);

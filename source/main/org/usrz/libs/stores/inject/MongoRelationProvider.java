@@ -22,6 +22,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
@@ -33,7 +34,6 @@ import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.google.inject.util.Types;

@@ -16,7 +16,6 @@
 package org.usrz.libs.stores;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import org.usrz.libs.utils.concurrent.Acceptor;
@@ -39,10 +38,14 @@ public interface Query<D extends Document> {
     /**
      * Search the {@link Document}s matching this {@link Query}.
      */
-    default Iterator<D> documents() {
+    default Cursor<D> documents() {
         final QueuedIterator<D> iterator = new QueuedIterator<>();
         this.documentsAsync(iterator);
-        return iterator;
+        return new Cursor<D>() {
+            @Override public boolean hasNext() { return iterator.hasNext(); }
+            @Override public D next()          { return iterator.next();    }
+            @Override public void close()      {        iterator.close();   }
+        };
     }
 
     /**
