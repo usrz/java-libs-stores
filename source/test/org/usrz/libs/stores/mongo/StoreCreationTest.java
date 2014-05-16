@@ -17,6 +17,7 @@ package org.usrz.libs.stores.mongo;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import javax.inject.Inject;
@@ -30,7 +31,6 @@ import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
-import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
@@ -48,7 +48,7 @@ import com.mongodb.DB;
 
 public class StoreCreationTest extends AbstractTest {
 
-    private static final Id id = new Id(new byte[20]);
+    private static final String id = UUID.randomUUID().toString();
     private static final String collection = RandomString.get(16);
     private static final Log log = new Log();
 
@@ -149,7 +149,7 @@ public class StoreCreationTest extends AbstractTest {
         private final Map<String, Integer> map;
 
         @JsonCreator
-        public MyBean(@JsonProperty("id") Id id,
+        public MyBean(@JsonProperty("id") String id,
                       @JsonProperty("sensible") String sensible,
                       @JsonProperty("nullable") String nullable,
                       @JacksonInject("map") Map<String, Integer> map) {

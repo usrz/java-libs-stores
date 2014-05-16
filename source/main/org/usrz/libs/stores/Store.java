@@ -52,7 +52,7 @@ public interface Store<D extends Document> {
     /**
      * Find the {@link Document} associated with the specified {@link Id}.
      */
-    public D find(Id id);
+    public D find(String id);
 
     /**
      * Store the specified {@link Document}.
@@ -62,7 +62,7 @@ public interface Store<D extends Document> {
     /**
      * Delete the {@link Document} associated with the specified {@link Id}.
      */
-    public boolean delete(Id id);
+    public boolean delete(String id);
 
     /**
      * Return a {@link Query} instance capable of searching {@link Document}s

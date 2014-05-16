@@ -21,7 +21,6 @@ import java.lang.annotation.Annotation;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.utils.caches.Cache;
 
@@ -75,10 +74,10 @@ public class MongoStoreBuilder<D extends Document> {
         return this;
     }
 
-    public MongoStoreBuilder<D> withCache(Cache<Id, D> cache) {
+    public MongoStoreBuilder<D> withCache(Cache<String, D> cache) {
         @SuppressWarnings("unchecked")
-        final TypeLiteral<Cache<Id, D>> cacheType = (TypeLiteral<Cache<Id, D>>)
-                TypeLiteral.get(Types.newParameterizedType(Cache.class, Id.class, type.getType()));
+        final TypeLiteral<Cache<String, D>> cacheType = (TypeLiteral<Cache<String, D>>)
+                TypeLiteral.get(Types.newParameterizedType(Cache.class, String.class, type.getType()));
         binder.bind(cacheType).toInstance(cache);
         return this;
     }

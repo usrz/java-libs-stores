@@ -30,15 +30,15 @@ import org.usrz.libs.utils.caches.Cache;
 public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
 
     private static final Log log = new Log();
-    private final Cache<Id, D> cache;
+    private final Cache<String, D> cache;
 
-    public CachingStore(Store<D> store, Cache<Id, D> cache) {
+    public CachingStore(Store<D> store, Cache<String, D> cache) {
         super(store);
         this.cache = Objects.requireNonNull(cache, "Null cache");
     }
 
     @Override
-    public D find(Id id) {
+    public D find(String id) {
         final D cached = cache.fetch(id);
         if (cached != null) return cached;
 
@@ -61,7 +61,7 @@ public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
     }
 
     @Override
-    public boolean delete(Id id) {
+    public boolean delete(String id) {
         cache.invalidate(id);
         return super.delete(id);
     }

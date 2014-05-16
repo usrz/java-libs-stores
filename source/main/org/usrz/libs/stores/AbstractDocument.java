@@ -29,15 +29,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public abstract class AbstractDocument implements Document {
 
-    private final Id id;
+    private final String id;
 
     @JsonCreator
-    protected AbstractDocument(@JsonProperty("id") Id id) {
+    protected AbstractDocument(@JsonProperty("id") String id) {
         this.id = Check.notNull(id, "Null ID");
     }
 
     @Override
-    public final Id getId() {
+    public final String getId() {
         return id;
     }
 

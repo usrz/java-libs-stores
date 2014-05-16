@@ -18,7 +18,6 @@ package org.usrz.libs.stores.mongo;
 import org.usrz.libs.stores.AbstractRelation;
 import org.usrz.libs.stores.Cursor;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 
 import com.mongodb.BasicDBObject;
@@ -49,11 +48,9 @@ extends AbstractRelation<L, R> {
     /* ====================================================================== */
 
     private BasicDBObject object(L l, R r) {
-        final Id idL = l.getId();
-        final Id idR = r.getId();
         return new BasicDBObject()
-                         .append(L, idL.toString())
-                         .append(R, idR.toString());
+                         .append(L, l.getId())
+                         .append(R, r.getId());
     }
 
     /* ====================================================================== */
@@ -82,7 +79,7 @@ extends AbstractRelation<L, R> {
 
         /* Get our DB cursor and iterate over it */
         return new MongoCursor<L>(collection.find(query, fields),
-                (o) -> storeL.find(new Id((String) o.get(L))));
+                (o) -> storeL.find((String) o.get(L)));
     }
 
     @Override
@@ -93,6 +90,6 @@ extends AbstractRelation<L, R> {
 
         /* Get our DB cursor and iterate over it */
         return new MongoCursor<R>(collection.find(query, fields),
-                (o) -> storeR.find(new Id((String) o.get(R))));
+                (o) -> storeR.find((String) o.get(R)));
     }
 }

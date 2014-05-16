@@ -26,7 +26,6 @@ import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
@@ -108,7 +107,7 @@ public class MongoStoreTest extends AbstractTest {
     public static abstract class ReferencingBean extends AbstractDocument {
 
         @JsonCreator
-        protected ReferencingBean(@JsonProperty("id") Id id) {
+        protected ReferencingBean(@JsonProperty("id") String id) {
             super(id);
         }
 
@@ -129,10 +128,10 @@ public class MongoStoreTest extends AbstractTest {
         }
 
         @JsonProperty("reference_id")
-        public abstract Id getReferenceID();
+        public abstract String getReferenceID();
 
         @JsonProperty("reference_id")
-        public abstract void setReferenceID(Id id);
+        public abstract void setReferenceID(String id);
 
         @Inject
         public void injectStore(Store<ReferencedBean> store) {

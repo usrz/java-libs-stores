@@ -25,6 +25,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public interface Document {
 
     @JsonProperty("id")
-    public Id getId();
+    public String getId();
 
 }

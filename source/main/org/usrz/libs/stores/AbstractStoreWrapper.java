@@ -50,7 +50,7 @@ public class AbstractStoreWrapper<D extends Document> implements Store<D> {
     }
 
     @Override
-    public D find(Id id) {
+    public D find(String id) {
         return store.find(id);
     }
 
@@ -60,7 +60,7 @@ public class AbstractStoreWrapper<D extends Document> implements Store<D> {
     }
 
     @Override
-    public boolean delete(Id id) {
+    public boolean delete(String id) {
         return store.delete(id);
     }
 

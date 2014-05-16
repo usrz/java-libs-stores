@@ -24,7 +24,6 @@ import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
@@ -42,14 +41,14 @@ public class CachingTest extends AbstractTest {
     private static final Log log = new Log();
 
     @Inject private Store<MyBean> store;
-    @Inject private Cache<Id, MyBean> cache;
+    @Inject private Cache<String, MyBean> cache;
     @Inject private DB db;
 
     @BeforeClass
     public void initialize()
     throws Exception {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
-        final Cache<Id, MyBean> cache = new SimpleCache<>();
+        final Cache<String, MyBean> cache = new SimpleCache<>();
 
         Guice.createInjector(MongoBuilder.apply((builder) -> {
             builder.configure(configurations.strip("mongo"));

@@ -25,9 +25,9 @@ import org.usrz.libs.stores.Cursor;
 import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Query;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
+import org.usrz.libs.utils.RandomString;
 
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.google.inject.Injector;
@@ -72,16 +72,17 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
          * been specified in the type annotation, and something reading
          * our object
          */
+        final String id = RandomString.get(32);
         if (consumer != null) {
             injector.injectMembers(consumer);
-            return convert(id(new Id()), consumer.andThen(creator));
+            return convert(id(id), consumer.andThen(creator));
         } else {
-            return convert(id(new Id()), creator);
+            return convert(id(id), creator);
         }
     }
 
     @Override
-    public D find(Id id) {
+    public D find(String id) {
         return convert(collection.findOne(id(id)), updater);
     }
 
@@ -101,7 +102,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public boolean delete(Id id) {
+    public boolean delete(String id) {
         return collection.remove(id(id)).getN() != 0;
     }
 
@@ -126,8 +127,8 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     /* ====================================================================== */
 
-    private BasicDBObject id(Id id) {
-        return new BasicDBObject("_id", notNull(id, "Null ID").toString());
+    private BasicDBObject id(String id) {
+        return new BasicDBObject("_id", notNull(id, "Null ID"));
     }
 
     /* ====================================================================== */
