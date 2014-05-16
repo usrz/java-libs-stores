@@ -55,31 +55,14 @@ public interface Store<D extends Document> {
     public D find(Id id);
 
     /**
-     * Asynchronously find the {@link Document} associated with the specified
-     * {@link Id}.
-     */
-    //public NotifyingFuture<D> findAsync(Id id);
-
-    /**
      * Store the specified {@link Document}.
      */
     public D store(D object);
 
     /**
-     * Asynchronously store the specified {@link Document}.
-     */
-    //public NotifyingFuture<D> storeAsync(D object);
-
-    /**
      * Delete the {@link Document} associated with the specified {@link Id}.
      */
     public boolean delete(Id id);
-
-    /**
-     * Asynchronously delete the {@link Document} associated with the specified
-     * {@link Id}.
-     */
-    //public NotifyingFuture<Boolean> deleteAsync(Id id);
 
     /**
      * Return a {@link Query} instance capable of searching {@link Document}s
