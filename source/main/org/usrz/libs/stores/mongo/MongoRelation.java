@@ -55,9 +55,9 @@ extends AbstractRelation<L, R> {
     private BasicDBObject object(L l, R r, boolean full) {
         final Id idL = l.getId();
         final Id idR = r.getId();
-        final BasicDBObject object = new BasicDBObject(ID, idL.xor(idR).toString());
-        if (full) object.append(L, idL.toString()).append(R, idR.toString());
-        return object;
+        return new BasicDBObject()
+                         .append(L, idL.toString())
+                         .append(R, idR.toString());
     }
 
     /* ====================================================================== */
