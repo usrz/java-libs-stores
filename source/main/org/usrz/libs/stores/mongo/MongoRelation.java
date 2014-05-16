@@ -49,10 +49,6 @@ extends AbstractRelation<L, R> {
     /* ====================================================================== */
 
     private BasicDBObject object(L l, R r) {
-        return object(l, r, false);
-    }
-
-    private BasicDBObject object(L l, R r, boolean full) {
         final Id idL = l.getId();
         final Id idR = r.getId();
         return new BasicDBObject()
@@ -64,7 +60,8 @@ extends AbstractRelation<L, R> {
 
     @Override
     public void associate(L l, R r) {
-        collection.save(object(l, r, true));
+        final BasicDBObject object = object(l, r);
+        collection.update(object, object, true, false);
     }
 
     @Override

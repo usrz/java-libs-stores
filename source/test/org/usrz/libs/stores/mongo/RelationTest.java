@@ -89,6 +89,7 @@ public class RelationTest extends AbstractTest {
 
     @Test
     public void testRelation() {
+
         final Foo foo1 = fooStore.store(fooStore.create()); // unjoined
         final Foo foo2 = fooStore.store(fooStore.create()); // joined with bar2
         final Foo foo3 = fooStore.store(fooStore.create()); // joined with bar4, bar5
@@ -107,7 +108,11 @@ public class RelationTest extends AbstractTest {
         relation.associate(foo4, bar3);
         relation.associate(foo5, bar3);
 
+        /* Test and re-associate the same association (should not fail) */
         assertTrue(relation.isAssociated(foo2, bar2));
+        relation.associate(foo2, bar2);
+        assertTrue(relation.isAssociated(foo2, bar2));
+
         assertTrue(relation.isAssociated(foo3, bar4));
         assertTrue(relation.isAssociated(foo3, bar5));
         assertTrue(relation.isAssociated(foo4, bar3));
