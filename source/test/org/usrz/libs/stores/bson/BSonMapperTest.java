@@ -21,9 +21,11 @@ import org.bson.BSONObject;
 import org.testng.annotations.Test;
 import org.usrz.libs.testing.AbstractTest;
 
+import com.google.inject.Guice;
+
 public class BSonMapperTest extends AbstractTest {
 
-    private final BSONObjectMapper mapper = new BSONObjectMapper();
+    private final BSONObjectMapper mapper = Guice.createInjector().getInstance(BSONObjectMapper.class);
 
     @Test
     public void testMapper()

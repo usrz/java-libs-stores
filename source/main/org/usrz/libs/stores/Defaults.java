@@ -25,10 +25,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
 
 /**
  * An annotation defining a {@link Consumer} for {@link Initializer}s.
@@ -76,30 +73,6 @@ public @interface Defaults {
          * Set the property with the given name to the given value.
          */
         public Initializer property(String name, Object value);
-
-        /**
-         * Support for the {@link JacksonInject} annotation and Guice.
-         */
-        public Initializer injectInstance(String name, Object instance);
-
-        /**
-         * Support for the {@link JacksonInject} annotation and Guice.
-         */
-        public Initializer inject(String name, Key<?> key);
-
-        /**
-         * Support for the {@link JacksonInject} annotation and Guice.
-         */
-        default Initializer inject(String name, TypeLiteral<?> type) {
-            return inject(name, Key.get(type));
-        }
-
-        /**
-         * Support for the {@link JacksonInject} annotation and Guice.
-         */
-        default Initializer inject(String name, Class<?> type) {
-            return inject(name, Key.get(type));
-        }
 
     }
 

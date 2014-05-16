@@ -50,7 +50,7 @@ public class MongoBuilder {
         this.binder.bind(DB.class).toProvider(new MongoDatabaseProvider().with(unique)).asEagerSingleton();
 
         /* Shared instances across all stores */
-        this.binder.bind(BSONObjectMapper.class).annotatedWith(unique).toInstance(new BSONObjectMapper());
+        this.binder.bind(BSONObjectMapper.class).annotatedWith(unique).to(BSONObjectMapper.class);
         this.binder.bind(BeanBuilder.class).annotatedWith(unique).toInstance(new BeanBuilder());
     }
 

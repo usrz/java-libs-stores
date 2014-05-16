@@ -22,6 +22,7 @@
     <dependency org="com.google"    name="guice"            rev="latest.release" conf="default"/>
     <dependency org="com.google"    name="guava"            rev="latest.release" conf="default"/>
     <dependency org="com.fasterxml" name="jackson-databind" rev="latest.release" conf="default"/>
+    <dependency org="com.fasterxml" name="jackson-guice"    rev="latest.release" conf="default"/>
     <dependency org="org.mongodb"   name="driver"           rev="latest.release" conf="default"/>
 
     <dependency org="org.usrz.libs" name="testing"          rev="latest.release" conf="testing-&gt;logging"/>

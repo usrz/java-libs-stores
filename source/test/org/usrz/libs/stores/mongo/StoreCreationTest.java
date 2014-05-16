@@ -184,8 +184,7 @@ public class StoreCreationTest extends AbstractTest {
         public void accept(Initializer initializer) {
             if (injector == null) throw new IllegalStateException("Not injected");
             initializer.property("sensible", "a sensible default")
-                       .property("_id", id) // this should be overridden!
-                       .inject("map", new TypeLiteral<Map<String, Integer>>(){});
+                       .property("_id", id); // this should be overridden!
         }
 
     }

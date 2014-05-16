@@ -36,7 +36,6 @@ public class BSONPropertyNamingStrategy extends PropertyNamingStrategyBase {
                 builder.append(c);
             }
         }
-        System.err.println("TRANSLATED \"" + propertyName + "\" TO \"" + builder.toString() + "\"");
         return builder.toString();
     }
 

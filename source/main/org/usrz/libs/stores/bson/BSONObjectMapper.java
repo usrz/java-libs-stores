@@ -19,31 +19,47 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.bson.BSONObject;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
 import com.fasterxml.jackson.databind.module.SimpleDeserializers;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import com.fasterxml.jackson.module.guice.GuiceAnnotationIntrospector;
+import com.fasterxml.jackson.module.guice.GuiceInjectableValues;
+import com.google.inject.Injector;
 import com.mongodb.BasicDBObject;
 
+@Singleton
 public class BSONObjectMapper extends ObjectMapper {
 
     public static final Version VERSION = new Version(1, 0, 0, null, "org.usrz.libs", "mongodb");
 
-    public BSONObjectMapper() {
-        this(null);
-    }
+    private final Injector injector;
 
-    public BSONObjectMapper(ObjectMapper mapper) {
-        /* Copy base configurations (or default if null) */
-        super(mapper == null ? new ObjectMapper() : mapper);
+    @Inject
+    private BSONObjectMapper(Injector injector) {
+        super(new ObjectMapper());
+
+        this.injector = injector;
+        setInjectableValues(new GuiceInjectableValues(injector));
+
+        final GuiceAnnotationIntrospector guiceIntrospector = new GuiceAnnotationIntrospector();
+        final AnnotationIntrospector introspector = getSerializationConfig().getAnnotationIntrospector();
+        setAnnotationIntrospectors(
+            new AnnotationIntrospectorPair(guiceIntrospector, introspector),
+            new AnnotationIntrospectorPair(guiceIntrospector, introspector)
+        );
 
         /* Always use underscores in names */
         setPropertyNamingStrategy(BSONPropertyNamingStrategy.INSTANCE);
@@ -65,33 +81,32 @@ public class BSONObjectMapper extends ObjectMapper {
         _serializerProvider = _serializerProvider.createInstance(
                 getSerializationConfig(), _serializerFactory);
 
-        _deserializationContext = _deserializationContext.with(
-                _deserializationContext.getFactory()
-                        .withAdditionalDeserializers(deserializers));
+        /* Our deserialization context */
+        _deserializationContext = _deserializationContext
+                .with(_deserializationContext.getFactory().withAdditionalDeserializers(deserializers));
     }
 
     /* ====================================================================== */
 
+    private final <T> T inject(T instance) {
+        if (instance != null) injector.injectMembers(instance);
+        return instance;
+    }
+
     public <T> T readValue(BSONObject object, Class<T> type)
     throws JsonProcessingException, IOException {
-        return readBSON(reader(type), object, type);
+        return inject(readBSON(reader(type), object, type));
     }
-
-    public <T> T readValue(BSONObject object, InjectableValues injectables, Class<T> type)
-    throws JsonProcessingException, IOException {
-        return readBSON(reader(type).with(injectables), object, type);
-    }
-
 
     public <T> T readValueWithView(BSONObject object, Class<T> type, Class<?> view)
     throws JsonProcessingException, IOException {
         Objects.requireNonNull(view, "Null view");
-        return readBSON(readerWithView(view), object, type);
+        return inject(readBSON(readerWithView(view), object, type));
     }
 
     private <T> T readBSON(ObjectReader reader, BSONObject object, Class<T> type)
     throws JsonProcessingException, IOException {
-        return reader.readValue(new BSONParser(this, object), type);
+        return inject(reader.readValue(new BSONParser(this, object), type));
     }
 
     /* ====================================================================== */
@@ -117,10 +132,4 @@ public class BSONObjectMapper extends ObjectMapper {
         return new BasicDBObject(map);
     }
 
-    /* ====================================================================== */
-
-    @Override
-    public BSONObjectMapper copy() {
-        return new BSONObjectMapper(this);
-    }
 }

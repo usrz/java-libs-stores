@@ -29,9 +29,7 @@ import org.usrz.libs.stores.Query;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.RandomString;
 
-import com.fasterxml.jackson.databind.InjectableValues;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -138,19 +136,9 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
             final BSONInitializer initializer = new BSONInitializer();
             consumer.accept(initializer);
 
-            System.err.println("CREATING WITH " + initializer.bson);
-
-
             /* Map the constructed BSON to the object */
             final BasicDBObject bson = initializer.bson;
-            final InjectableValues injectables = initializer.inject;
-            final D document = mapper.readValue(bson, injectables, type);
-
-            /* Just in case of some @Inject ... */
-            injector.injectMembers(document);
-
-            /* Done... */
-            return document;
+            return mapper.readValue(bson, type);
         } catch (IOException exception) {
             throw new MongoException("Exception mapping BSON to " + type.getName(), exception);
         }
@@ -161,7 +149,6 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     private final class BSONInitializer implements Initializer {
 
         final BasicDBObject bson = new BasicDBObject();
-        final InjectableValues.Std inject = new InjectableValues.Std();
 
         @Override
         public Initializer property(String name, Object value) {
@@ -169,16 +156,5 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
             return this;
         }
 
-        @Override
-        public Initializer inject(String name, Key<?> key) {
-            inject.addValue(notNull(name, "Null name"), injector.getInstance(key));
-            return this;
-        }
-
-        @Override
-        public Initializer injectInstance(String name, Object instance) {
-            inject.addValue(notNull(name, "Null name"), instance);
-            return this;
-        }
     }
 }
