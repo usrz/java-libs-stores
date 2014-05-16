@@ -18,7 +18,6 @@ package org.usrz.libs.stores.inject;
 import static org.usrz.libs.utils.Check.notEmpty;
 import static org.usrz.libs.utils.Check.notNull;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 
 import javax.inject.Inject;
@@ -30,7 +29,6 @@ import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.mongo.MongoRelation;
 import org.usrz.libs.utils.Injections;
-import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -44,24 +42,21 @@ implements Provider<Relation<L, R>> {
 
     private static final Log log = new Log();
 
-    private final Annotation annotation;
     private final TypeLiteral<L> typeL;
     private final TypeLiteral<R> typeR;
     private final String collection;
 
     private Relation<L, R> relation;
 
-    protected MongoRelationProvider(Annotation annotation, TypeLiteral<L> typeL, TypeLiteral<R> typeR, String collection) {
+    protected MongoRelationProvider(TypeLiteral<L> typeL, TypeLiteral<R> typeR, String collection) {
         this.typeL = notNull(typeL, "Null type for left association");
         this.typeR = notNull(typeR, "Null type for right association");
         this.collection = notEmpty(collection, "Invalid collection name");
-        this.annotation = annotation;
     }
 
     @Inject
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void setup(Injector injector) {
-        final SimpleExecutor executor = Injections.getInstance(injector, SimpleExecutor.class, annotation);
         final DBCollection collection = Injections.getInstance(injector, DBCollection.class, Names.named(this.collection));
 
         final ParameterizedType storeTypeL = Types.newParameterizedType(Store.class, typeL.getType());
@@ -74,7 +69,7 @@ implements Provider<Relation<L, R>> {
         final Store<R> storeR = injector.getInstance(Key.get(literalR));
 
         /* Create our relation */
-        this.relation = new MongoRelation(executor, collection, storeL, storeR);
+        this.relation = new MongoRelation(collection, storeL, storeR);
         log.info("Created Relation<%s, %s> in collection %s", typeL, typeR, collection.getName());
     }
 

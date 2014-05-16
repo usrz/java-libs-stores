@@ -26,8 +26,6 @@ import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.Injections;
 import org.usrz.libs.utils.beans.BeanBuilder;
-import org.usrz.libs.utils.concurrent.SimpleExecutor;
-import org.usrz.libs.utils.concurrent.SimpleExecutorProvider;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
@@ -73,19 +71,6 @@ public class MongoBuilder {
     public void configure(Configurations configurations) {
         /* Bind our configurations */
         binder.bind(Configurations.class).annotatedWith(unique).toInstance(configurations);
-
-        /* If we have executor configurations, inject them */
-        final Configurations executor = configurations.extract("executor");
-        if (!executor.isEmpty()) withExecutor(executor);
-    }
-
-    /* ====================================================================== */
-
-    public void withExecutor(Configurations configurations) {
-        /* Bind our simple executor with its configurations */
-        binder.bind(SimpleExecutor.class)
-              .annotatedWith(unique)
-              .toProvider(new SimpleExecutorProvider().with(configurations));
     }
 
     /* ====================================================================== */
@@ -126,6 +111,6 @@ public class MongoBuilder {
         @SuppressWarnings("unchecked")
         final TypeLiteral<Relation<L, R>> type = (TypeLiteral<Relation<L, R>>)
                 TypeLiteral.get(Types.newParameterizedType(Relation.class, left.getType(), right.getType()));
-        binder.bind(type).toProvider(new MongoRelationProvider<L, R>(unique, left, right, collection));
+        binder.bind(type).toProvider(new MongoRelationProvider<L, R>(left, right, collection));
     }
 }

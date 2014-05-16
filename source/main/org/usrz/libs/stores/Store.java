@@ -18,7 +18,6 @@ package org.usrz.libs.stores;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Defaults.Initializer;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
 
 /**
  * A {@link Store} stores {@link Document} instances.
@@ -36,7 +35,9 @@ public interface Store<D extends Document> {
     /**
      * Create a new {@link Document} instance.
      */
-    public D create();
+    public default D create() {
+        return create((initializer) -> {});
+    }
 
     /**
      * Create a new {@link Document} instance, using the specified
@@ -57,7 +58,7 @@ public interface Store<D extends Document> {
      * Asynchronously find the {@link Document} associated with the specified
      * {@link Id}.
      */
-    public NotifyingFuture<D> findAsync(Id id);
+    //public NotifyingFuture<D> findAsync(Id id);
 
     /**
      * Store the specified {@link Document}.
@@ -67,7 +68,7 @@ public interface Store<D extends Document> {
     /**
      * Asynchronously store the specified {@link Document}.
      */
-    public NotifyingFuture<D> storeAsync(D object);
+    //public NotifyingFuture<D> storeAsync(D object);
 
     /**
      * Delete the {@link Document} associated with the specified {@link Id}.
@@ -78,7 +79,7 @@ public interface Store<D extends Document> {
      * Asynchronously delete the {@link Document} associated with the specified
      * {@link Id}.
      */
-    public NotifyingFuture<Boolean> deleteAsync(Id id);
+    //public NotifyingFuture<Boolean> deleteAsync(Id id);
 
     /**
      * Return a {@link Query} instance capable of searching {@link Document}s
@@ -93,6 +94,8 @@ public interface Store<D extends Document> {
      * <p>
      * This is equivalent to calling {@code this.query().and(field)}.
      */
-    public Query.Operator<D> query(String field);
+    public default Query.Operator<D> query(String field) {
+        return this.query().and(field);
+    }
 
 }

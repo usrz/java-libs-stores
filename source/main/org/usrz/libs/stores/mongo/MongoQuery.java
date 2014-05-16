@@ -21,8 +21,6 @@ import java.util.regex.Pattern;
 
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Query;
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -40,9 +38,6 @@ public abstract class MongoQuery<D extends Document> implements Query<D> {
     public Operator and(String key) {
         return new Operator(Objects.requireNonNull(key, "Null key"));
     }
-
-    @Override
-    public abstract NotifyingFuture<?> documentsAsync(Acceptor<D> acceptor);
 
     /* ====================================================================== */
 

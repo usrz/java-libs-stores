@@ -20,7 +20,6 @@ import static org.usrz.libs.utils.Check.notNull;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Defaults.Initializer;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
 
 /**
  * A <em>Wrapper</em> around another {@link Store}.
@@ -28,7 +27,7 @@ import org.usrz.libs.utils.concurrent.NotifyingFuture;
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  * @param <D> The type of {@link Document}s stored by this {@link Store}.
  */
-public class AbstractStoreWrapper<D extends Document> extends AbstractStore<D> {
+public class AbstractStoreWrapper<D extends Document> implements Store<D> {
 
     /** The original {@link Store} wrapped by this instance. */
     protected final Store<D> store;
@@ -51,18 +50,18 @@ public class AbstractStoreWrapper<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public NotifyingFuture<D> findAsync(Id id) {
-        return store.findAsync(id);
+    public D find(Id id) {
+        return store.find(id);
     }
 
     @Override
-    public NotifyingFuture<D> storeAsync(D object) {
-        return store.storeAsync(object);
+    public D store(D object) {
+        return store.store(object);
     }
 
     @Override
-    public NotifyingFuture<Boolean> deleteAsync(Id id) {
-        return store.deleteAsync(id);
+    public boolean delete(Id id) {
+        return store.delete(id);
     }
 
     @Override

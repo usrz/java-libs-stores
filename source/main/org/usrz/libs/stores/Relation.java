@@ -15,10 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.Iterator;
-
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
 
 /**
  * The {@link Relation} interface defines an abstract way to relate two
@@ -37,22 +33,10 @@ public interface Relation<L extends Document, R extends Document> {
     public void associate(L left, R right);
 
     /**
-     * Asynchronously ensure that the relation between the two specified
-     * {@link Document}s is present.
-     */
-    public NotifyingFuture<?> associateAsync(L left, R right);
-
-    /**
      * Ensure that the relation between the two specified {@link Document}s
      * is <em>not</em> present.
      */
     public void dissociate(L left, R right);
-
-    /**
-     * Asynchronously ensure that the relation between the two specified
-     * {@link Document}s is <em>not</em> present.
-     */
-    public NotifyingFuture<?> dissociateAsync(L left, R right);
 
     /**
      * Check whether the relation between the two specified {@link Document}s
@@ -61,33 +45,15 @@ public interface Relation<L extends Document, R extends Document> {
     public boolean isAssociated(L left, R right);
 
     /**
-     * Asynchronously check whether the relation between the two specified
-     * {@link Document}s is present or not.
-     */
-    public NotifyingFuture<Boolean> isAssociatedAsync(L left, R right);
-
-    /**
      * Find all the <em>left</em> {@link Document}s associated with the
      * specified <em>right</em> one.
      */
-    public Iterator<L> findL(R right);
-
-    /**
-     * Asynchronously find all the <em>left</em> {@link Document}s associated
-     * with the specified <em>right</em> one.
-     */
-    public NotifyingFuture<?> findAsyncL(R right, Acceptor<L> acceptor);
+    public Cursor<L> findL(R right);
 
     /**
      * Find all the <em>right</em> {@link Document}s associated with the
      * specified <em>left</em> one.
      */
-    public Iterator<R> findR(L left);
-
-    /**
-     * Asynchronously find all the <em>right</em> {@link Document}s associated
-     * with the specified <em>left</em> one.
-     */
-    public NotifyingFuture<?> findAsyncR(L left, Acceptor<R> acceptor);
+    public Cursor<R> findR(L left);
 
 }

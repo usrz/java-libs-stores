@@ -18,33 +18,28 @@ package org.usrz.libs.stores.mongo;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.AbstractStore;
+import org.usrz.libs.stores.Cursor;
 import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Query;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
-import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 
 
 public class MongoStore<D extends Document> extends AbstractStore<D> {
 
-    private final SimpleExecutor executor;
     private final DBCollection collection;
     private final BSONObjectMapper mapper;
     private final Injector injector;
@@ -52,15 +47,13 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     private final Consumer<Initializer> creator;
     private final Consumer<Initializer> updater;
 
-    public MongoStore(SimpleExecutor executor,
-                      BSONObjectMapper mapper,
+    public MongoStore(BSONObjectMapper mapper,
                       Injector injector,
                       DBCollection collection,
                       Class<D> type) {
         creator = Defaults.Finder.find(type, injector, true);
         updater = Defaults.Finder.find(type, injector, false);
         this.collection = collection;
-        this.executor = executor;
         this.injector = injector;
         this.mapper = mapper;
         this.type = type;
@@ -88,27 +81,28 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public NotifyingFuture<D> findAsync(Id id) {
-        return executor.call(() -> {
-            return convert(collection.findOne(id(id)), updater);
-        });
+    public D find(Id id) {
+        return convert(collection.findOne(id(id)), updater);
     }
 
     @Override
-    public NotifyingFuture<D> storeAsync(D object) {
-        return executor.call(() -> {
-            final BasicDBObject bson = mapper.writeValueAsBson(object);
-            if (bson.containsField("id")) {
-                bson.put("_id", bson.remove("id"));
-            }
-            collection.save(bson);
-            return object;
-        });
+    public D store(D object) {
+        final BasicDBObject bson;
+        try {
+             bson = mapper.writeValueAsBson(object);
+        } catch (IOException exception) {
+            throw new MongoException("Unable to map object to BSON", exception);
+        }
+        if (bson.containsField("id")) {
+            bson.put("_id", bson.remove("id"));
+        }
+        collection.save(bson);
+        return object;
     }
 
     @Override
-    public NotifyingFuture<Boolean> deleteAsync(Id id) {
-        return executor.call(() -> (collection.remove(id(id)).getN() != 0));
+    public boolean delete(Id id) {
+        return collection.remove(id(id)).getN() != 0;
     }
 
     /* ====================================================================== */
@@ -118,27 +112,14 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         return new MongoQuery<D>(new BasicDBObject()) {
 
             @Override
-            public NotifyingFuture<?> documentsAsync(Acceptor<D> acceptor) {
-                return executor.run(() -> {
-                    try {
-                        /* Normalize alias "id" -> "_id" */
-                        if (query.containsKey((Object)"id")) {
-                            query.put("_id", query.remove("id"));
-                        }
+            public Cursor<D> documents() {
+                /* Normalize alias "id" -> "_id" */
+                if (query.containsKey((Object)"id")) {
+                    query.put("_id", query.remove("id"));
+                }
 
-                        /* Get our DB cursor and iterate over it */
-                        final DBCursor cursor = collection.find(query);
-                        final Iterator<DBObject> iterator = cursor.iterator();
-                        while (iterator.hasNext()) {
-                            final D document = convert(iterator.next(), updater);
-                            if (!acceptor.accept(document)) break;
-                        }
-                        cursor.close();
-                        acceptor.completed();
-                    } catch (Throwable throwable) {
-                        acceptor.failed(throwable);
-                    }
-                });
+                /* Get our DB cursor and iterate over it */
+                return new MongoCursor<D>(collection.find(query), (o) -> convert(o, updater));
             }
         };
     }

@@ -29,7 +29,6 @@ import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.stores.mongo.MongoStore;
 import org.usrz.libs.utils.Injections;
 import org.usrz.libs.utils.caches.Cache;
-import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -56,7 +55,6 @@ implements Provider<Store<D>> {
     @Inject
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void setup(Injector injector) {
-        final SimpleExecutor executor = Injections.getInstance(injector, SimpleExecutor.class, annotation);
         final BSONObjectMapper mapper = Injections.getInstance(injector, BSONObjectMapper.class, annotation);
         final DBCollection collection = Injections.getInstance(injector, DBCollection.class, Names.named(this.collection));
 
@@ -65,14 +63,14 @@ implements Provider<Store<D>> {
         final Class<D> beanClass = Injections.getInstance(injector, Key.get(beanType));
 
         /* Create the basic store */
-        store = new MongoStore(executor, mapper, injector, collection, beanClass);
+        store = new MongoStore(mapper, injector, collection, beanClass);
         log.info("Created Store<%s> in collection %s", type, collection.getName());
 
         /* Caches */
         final TypeLiteral<Cache<Id, D>> cacheType = (TypeLiteral<Cache<Id, D>>) TypeLiteral.get(Types.newParameterizedType(Cache.class, Id.class, type.getType()));
         final Cache<Id, D> cache = Injections.getInstance(injector, Key.get(cacheType), true);
         if (cache != null) {
-            store = new CachingStore<D>(executor, store, cache);
+            store = new CachingStore<D>(store, cache);
             log.info("Enabling cache on Store<%s> with cache %s", type, cache);
         }
     }

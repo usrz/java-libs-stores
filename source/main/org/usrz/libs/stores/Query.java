@@ -18,10 +18,6 @@ package org.usrz.libs.stores;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
-import org.usrz.libs.utils.concurrent.QueuedIterator;
-
 /**
  * An extremely simple query interface for {@link Document}s.
  *
@@ -38,20 +34,22 @@ public interface Query<D extends Document> {
     /**
      * Search the {@link Document}s matching this {@link Query}.
      */
-    default Cursor<D> documents() {
-        final QueuedIterator<D> iterator = new QueuedIterator<>();
-        this.documentsAsync(iterator);
-        return new Cursor<D>() {
-            @Override public boolean hasNext() { return iterator.hasNext(); }
-            @Override public D next()          { return iterator.next();    }
-            @Override public void close()      {        iterator.close();   }
-        };
-    }
+    public Cursor<D> documents();
 
     /**
-     * Asynchronously search the {@link Document}s matching this {@link Query}.
+     * Find the firs {@link Document} matching this {@link Query} or return
+     * <b>null</b>
      */
-    public NotifyingFuture<?> documentsAsync(Acceptor<D> acceptor);
+    default D first() {
+        final Cursor<D> cursor = this.documents();
+        final D document;
+        try {
+            document = cursor.hasNext() ? cursor.next() : null;
+        } finally {
+            cursor.close();
+        }
+        return document;
+    }
 
     /* ====================================================================== */
 

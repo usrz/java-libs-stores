@@ -16,16 +16,13 @@
 package org.usrz.libs.stores.mongo;
 
 import org.usrz.libs.stores.AbstractRelation;
+import org.usrz.libs.stores.Cursor;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
-import org.usrz.libs.utils.concurrent.Acceptor;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
-import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
 
 public class MongoRelation<L extends Document, R extends Document>
 extends AbstractRelation<L, R> {
@@ -34,15 +31,13 @@ extends AbstractRelation<L, R> {
     private static final String L = "l";
     private static final String R = "r";
 
-    private final SimpleExecutor executor;
     private final DBCollection collection;
     private final Store<L> storeL;
     private final Store<R> storeR;
 
-    public MongoRelation(SimpleExecutor executor, DBCollection collection, Store<L> storeL, Store<R> storeR) {
+    public MongoRelation(DBCollection collection, Store<L> storeL, Store<R> storeR) {
         this.storeL = storeL;
         this.storeR = storeR;
-        this.executor = executor;
         this.collection = collection;
 
         collection.ensureIndex(new BasicDBObject(L, 1), new BasicDBObject("unique", false).append("sparse", false));
@@ -68,62 +63,39 @@ extends AbstractRelation<L, R> {
     /* ====================================================================== */
 
     @Override
-    public NotifyingFuture<?> associateAsync(L l, R r) {
-        return this.executor.run(() -> collection.save(object(l, r, true)));
+    public void associate(L l, R r) {
+        collection.save(object(l, r, true));
     }
 
     @Override
-    public NotifyingFuture<?> dissociateAsync(L l, R r) {
-        return this.executor.run(() -> collection.remove(object(l, r)));
+    public void dissociate(L l, R r) {
+        collection.remove(object(l, r));
     }
 
     @Override
-    public NotifyingFuture<Boolean> isAssociatedAsync(L l, R r) {
-        return this.executor.call(() -> collection.findOne(object(l, r)) != null);
+    public boolean isAssociated(L l, R r) {
+        return collection.findOne(object(l, r)) != null;
     }
 
     @Override
-    public NotifyingFuture<?> findAsyncL(R r, Acceptor<L> acceptor) {
-        return executor.run(() -> {
-            try {
-                /* Build our query on "R" returning only "L" */
-                final BasicDBObject query = new BasicDBObject(R, r.getId().toString());
-                final BasicDBObject fields = new BasicDBObject(L, 1).append(ID, 0);
+    public Cursor<L> findL(R r) {
+        /* Build our query on "R" returning only "L" */
+        final BasicDBObject query = new BasicDBObject(R, r.getId().toString());
+        final BasicDBObject fields = new BasicDBObject(L, 1).append(ID, 0);
 
-                /* Get our DB cursor and iterate over it */
-                final DBCursor cursor = collection.find(query, fields);
-                cursor.forEach((object) -> {
-                    /* Find *SYNCHRONOUSLY* (we want results in order) */
-                    final L document = storeL.find(new Id((String) object.get(L)));
-                    if (document != null) acceptor.accept(document);
-                });
-                acceptor.completed();
-            } catch (Throwable throwable) {
-                acceptor.failed(throwable);
-            }
-        });
+        /* Get our DB cursor and iterate over it */
+        return new MongoCursor<L>(collection.find(query, fields),
+                (o) -> storeL.find(new Id((String) o.get(L))));
     }
 
     @Override
-    public NotifyingFuture<?> findAsyncR(L l, Acceptor<R> acceptor) {
-        return executor.run(() -> {
-            try {
-                /* Build our query on "L" returning only "R" */
-                final BasicDBObject query = new BasicDBObject(L, l.getId().toString());
-                final BasicDBObject fields = new BasicDBObject(R, 1).append(ID, 0);
+    public Cursor<R> findR(L l) {
+        /* Build our query on "L" returning only "R" */
+        final BasicDBObject query = new BasicDBObject(L, l.getId().toString());
+        final BasicDBObject fields = new BasicDBObject(R, 1).append(ID, 0);
 
-                /* Get our DB cursor and iterate over it */
-                final DBCursor cursor = collection.find(query, fields);
-                cursor.forEach((object) -> {
-                    /* Find *SYNCHRONOUSLY* (we want results in order) */
-                    final R document = storeR.find(new Id((String) object.get(R)));
-                    if (document != null) acceptor.accept(document);
-                });
-                acceptor.completed();
-            } catch (Throwable throwable) {
-                acceptor.failed(throwable);
-            }
-        });
+        /* Get our DB cursor and iterate over it */
+        return new MongoCursor<R>(collection.find(query, fields),
+                (o) -> storeR.find(new Id((String) o.get(R))));
     }
-
 }

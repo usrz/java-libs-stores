@@ -15,14 +15,10 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import static org.usrz.libs.utils.concurrent.Immediate.immediate;
-
 import java.util.Objects;
 
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.utils.caches.Cache;
-import org.usrz.libs.utils.concurrent.NotifyingFuture;
-import org.usrz.libs.utils.concurrent.SimpleExecutor;
 
 /**
  * A {@link Store} capable of <em>caching</em> documents in the wrapped
@@ -34,53 +30,40 @@ import org.usrz.libs.utils.concurrent.SimpleExecutor;
 public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
 
     private static final Log log = new Log();
-    private final SimpleExecutor executor;
     private final Cache<Id, D> cache;
 
-    public CachingStore(SimpleExecutor executor, Store<D> store, Cache<Id, D> cache) {
+    public CachingStore(Store<D> store, Cache<Id, D> cache) {
         super(store);
-        this.executor = Objects.requireNonNull(executor, "Null executor");
         this.cache = Objects.requireNonNull(cache, "Null cache");
     }
 
     @Override
-    public NotifyingFuture<D> findAsync(Id id) {
-        return executor.delegate(() -> {
-            final D cached = cache.fetch(id);
-            if (cached != null) return immediate(cached);
-            return store.findAsync(id).withConsumer((future) -> {
-                try {
-                    final D document = future.get();
-                    if (document == null) return;
-                    log.debug("Caching document %s on fetch", document.getId());
-                    cache.store(document.getId(), document);
-                } catch (Exception exception) {
-                    log.warn(exception, "Exception caching document");
-                }
-            });
-        });
+    public D find(Id id) {
+        final D cached = cache.fetch(id);
+        if (cached != null) return cached;
+
+        final D document = super.find(id);
+        if (document != null) {
+            log.debug("Caching document %s on fetch", document.getId());
+            cache.store(document.getId(), document);
+        }
+        return document;
     }
 
     @Override
-    public NotifyingFuture<D> storeAsync(D object) {
-        return store.storeAsync(object).withConsumer((future) -> {
-            try {
-                final D document = future.get();
-                if (document == null) return;
-                log.debug("Caching document %s on store", document.getId());
-                cache.store(document.getId(), document);
-            } catch (Exception exception) {
-                log.warn(exception, "Exception caching document");
-            }
-
-        });
+    public D store(D object) {
+        final D document = super.store(object);
+        if (document != null) {
+            log.debug("Caching document %s on store", document.getId());
+            cache.store(document.getId(), document);
+        }
+        return document;
     }
 
     @Override
-    public NotifyingFuture<Boolean> deleteAsync(Id id) {
-        /* Simple, invalidate cache and return */
+    public boolean delete(Id id) {
         cache.invalidate(id);
-        return store.deleteAsync(id);
+        return super.delete(id);
     }
 
 }

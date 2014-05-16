@@ -15,7 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import com.google.common.util.concurrent.Futures;
 
 /**
  * An abstract implementation of the {@link Store} interface.
@@ -24,30 +23,5 @@ import com.google.common.util.concurrent.Futures;
  * @param <D> The type of {@link Document}s stored by this {@link Store}.
  */
 public abstract class AbstractStore<D extends Document> implements Store<D> {
-
-    @Override
-    public final D create() {
-        return create((initializer) -> {});
-    }
-
-    @Override
-    public final D find(Id id) {
-        return Futures.getUnchecked(findAsync(id));
-    }
-
-    @Override
-    public final D store(D object) {
-        return Futures.getUnchecked(storeAsync(object));
-    }
-
-    @Override
-    public final boolean delete(Id id) {
-        return Futures.getUnchecked(deleteAsync(id));
-    }
-
-    @Override
-    public final Query.Operator<D> query(String field) {
-        return this.query().and(field);
-    }
 
 }

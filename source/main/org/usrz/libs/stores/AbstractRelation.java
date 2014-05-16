@@ -15,11 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.Iterator;
-
-import org.usrz.libs.utils.concurrent.QueuedIterator;
-
-import com.google.common.util.concurrent.Futures;
 
 /**
  * An abstract implementation of the {@link Relation} interface.
@@ -30,34 +25,5 @@ import com.google.common.util.concurrent.Futures;
  */
 public abstract class AbstractRelation<L extends Document, R extends Document>
 implements Relation<L, R> {
-
-    @Override
-    public void associate(L left, R right) {
-        Futures.getUnchecked(associateAsync(left, right));
-    }
-
-    @Override
-    public void dissociate(L left, R right) {
-        Futures.getUnchecked(dissociateAsync(left, right));
-    }
-
-    @Override
-    public boolean isAssociated(L left, R right) {
-        return Futures.getUnchecked(isAssociatedAsync(left, right));
-    }
-
-    @Override
-    public Iterator<L> findL(R right) {
-        final QueuedIterator<L> iterator = new QueuedIterator<>();
-        findAsyncL(right, iterator);
-        return iterator;
-    }
-
-    @Override
-    public Iterator<R> findR(L left) {
-        final QueuedIterator<R> iterator = new QueuedIterator<>();
-        findAsyncR(left, iterator);
-        return iterator;
-    }
 
 }
