@@ -30,6 +30,7 @@ import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
@@ -113,7 +114,7 @@ public class StoreDefaultsTest extends AbstractTest {
         @JsonIgnore private String value;
 
         @JsonCreator
-        public MyBean(@JsonProperty("id") String id,
+        public MyBean(@Id String id,
                       @JsonProperty("init") String init,
                       @JsonProperty("state") String state,
                       @JsonProperty("extra") String extra,

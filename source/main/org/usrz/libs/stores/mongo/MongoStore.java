@@ -88,17 +88,13 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     @Override
     public D store(D object) {
-        final BasicDBObject bson;
         try {
-             bson = mapper.writeValueAsBson(object);
+             collection.save(mapper.writeValueAsBson(object));
+             return object;
         } catch (IOException exception) {
             throw new MongoException("Unable to map object to BSON", exception);
         }
-        if (bson.containsField("id")) {
-            bson.put("_id", bson.remove("id"));
-        }
-        collection.save(bson);
-        return object;
+
     }
 
     @Override
@@ -114,12 +110,6 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
             @Override
             public Cursor<D> documents() {
-                /* Normalize alias "id" -> "_id" */
-                if (query.containsKey((Object)"id")) {
-                    query.put("_id", query.remove("id"));
-                }
-
-                /* Get our DB cursor and iterate over it */
                 return new MongoCursor<D>(collection.find(query), (o) -> convert(o, updater));
             }
         };
@@ -139,7 +129,6 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         consumer = consumer.andThen((initializer) -> {
             object.keySet().forEach((key) -> {
                 final Object value = object.get(key);
-                if ("_id".equals(key)) key = "id";
                 initializer.property(key, value);
             });
         });
@@ -148,6 +137,9 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
             /* Create an initializer and build our BSON + injectables */
             final BSONInitializer initializer = new BSONInitializer();
             consumer.accept(initializer);
+
+            System.err.println("CREATING WITH " + initializer.bson);
+
 
             /* Map the constructed BSON to the object */
             final BasicDBObject bson = initializer.bson;

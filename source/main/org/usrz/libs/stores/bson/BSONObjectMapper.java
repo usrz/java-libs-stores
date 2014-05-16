@@ -15,8 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores.bson;
 
-import static com.fasterxml.jackson.databind.PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
@@ -48,7 +46,7 @@ public class BSONObjectMapper extends ObjectMapper {
         super(mapper == null ? new ObjectMapper() : mapper);
 
         /* Always use underscores in names */
-        setPropertyNamingStrategy(CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        setPropertyNamingStrategy(BSONPropertyNamingStrategy.INSTANCE);
 
         /*
          * We can't use a module here, as they seem to be shared across all

@@ -15,55 +15,31 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import static java.lang.Integer.toHexString;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import org.usrz.libs.utils.Check;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * An abstract implementation of the {@link Document} interface.
+ * A simple annotation usable in constructors when implementing the
+ * {@link Document} interface or extending {@link AbstractDocument}.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  */
-public abstract class AbstractDocument implements Document {
+@Inherited
+@Documented
+@Retention(RUNTIME)
+@Target({PARAMETER})
 
-    private final String id;
+@JsonProperty(Id.KEY)
+@JacksonAnnotationsInside
+public @interface Id {
 
-    @JsonCreator
-    protected AbstractDocument(@Id String id) {
-        this.id = Check.notNull(id, "Null ID");
-    }
-
-    @Override
-    @JsonProperty(Id.KEY)
-    public final String getId() {
-        return id;
-    }
-
-    /* ====================================================================== */
-
-    @Override
-    public String toString() {
-        return getClass().getName() + "[" + getId() + "]@" + toHexString(hashCode());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode() ^ getId().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (object == null) return false;
-        if (object == this) return true;
-        try {
-            final Document document = (Document) object;
-            return document.getClass().equals(getClass())
-                && document.getId().equals(getId());
-        } catch (ClassCastException exception) {
-            return false;
-        }
-    }
+    public static final String KEY = "_id";
 }

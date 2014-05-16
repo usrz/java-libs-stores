@@ -13,18 +13,31 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores;
+package org.usrz.libs.stores.bson;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy.PropertyNamingStrategyBase;
 
-/**
- * The core interface defining a <em>storable</em> object.
- *
- * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
- */
-public interface Document {
+public class BSONPropertyNamingStrategy extends PropertyNamingStrategyBase {
 
-    @JsonProperty(Id.KEY)
-    public String getId();
+    public static final BSONPropertyNamingStrategy INSTANCE = new BSONPropertyNamingStrategy();
+
+    private BSONPropertyNamingStrategy() {
+        /* Nothing to do, really */
+    }
+
+    @Override
+    public String translate(String propertyName) {
+        if (propertyName == null) return propertyName;
+        final StringBuilder builder = new StringBuilder();
+        for (char c: propertyName.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                builder.append('_').append(Character.toLowerCase(c));
+            } else {
+                builder.append(c);
+            }
+        }
+        System.err.println("TRANSLATED \"" + propertyName + "\" TO \"" + builder.toString() + "\"");
+        return builder.toString();
+    }
 
 }

@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Defaults.Initializer;
 
+
 /**
  * A {@link Store} stores {@link Document} instances.
  *

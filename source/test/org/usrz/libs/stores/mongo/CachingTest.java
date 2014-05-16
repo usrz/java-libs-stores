@@ -76,7 +76,6 @@ public class CachingTest extends AbstractTest {
         assertNull(cache.fetch(bean.getId()), "Cached on creation");
 
         store.store(bean);
-        Thread.sleep(100); // cache on store is asynchronous...
         assertNotNull(cache.fetch(bean.getId()), "Not cached on store");
 
         cache.invalidate(bean.getId());

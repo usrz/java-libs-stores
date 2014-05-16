@@ -31,6 +31,7 @@ import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
+import org.usrz.libs.stores.Id;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
@@ -149,7 +150,7 @@ public class StoreCreationTest extends AbstractTest {
         private final Map<String, Integer> map;
 
         @JsonCreator
-        public MyBean(@JsonProperty("id") String id,
+        public MyBean(@Id String id,
                       @JsonProperty("sensible") String sensible,
                       @JsonProperty("nullable") String nullable,
                       @JacksonInject("map") Map<String, Integer> map) {
@@ -183,7 +184,7 @@ public class StoreCreationTest extends AbstractTest {
         public void accept(Initializer initializer) {
             if (injector == null) throw new IllegalStateException("Not injected");
             initializer.property("sensible", "a sensible default")
-                       .property("id", id) // this should be overridden!
+                       .property("_id", id) // this should be overridden!
                        .inject("map", new TypeLiteral<Map<String, Integer>>(){});
         }
 
