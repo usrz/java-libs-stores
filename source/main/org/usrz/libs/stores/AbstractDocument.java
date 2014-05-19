@@ -17,6 +17,7 @@ package org.usrz.libs.stores;
 
 import static java.lang.Integer.toHexString;
 
+import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.utils.Check;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
