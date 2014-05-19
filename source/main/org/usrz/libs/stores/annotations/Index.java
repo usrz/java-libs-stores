@@ -15,8 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores.annotations;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.usrz.libs.stores.annotations.Indexes.Type.ASCENDING;
@@ -46,9 +44,9 @@ import org.usrz.libs.stores.annotations.Indexes.Type;
  */
 @Inherited
 @Documented
-@Repeatable(Indexes.class)
+@Target({TYPE})
 @Retention(RUNTIME)
-@Target({TYPE, FIELD, METHOD})
+@Repeatable(Indexes.class)
 public @interface Index {
 
     /**

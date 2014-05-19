@@ -15,8 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores.annotations;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -25,10 +23,16 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+/**
+ * A <em>meta-annotation</em> defining the repeatibility of the {@link Index}
+ * annotation.
+ *
+ * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
+ */
 @Inherited
 @Documented
+@Target({TYPE})
 @Retention(RUNTIME)
-@Target({TYPE, FIELD, METHOD})
 public @interface Indexes {
 
     /** The type of the index to create. */
@@ -36,6 +40,9 @@ public @interface Indexes {
     /** The options for index creation. */
     public enum Option { SPARSE, UNIQUE };
 
+    /**
+     * The {@link Index} annotations associated with this.
+     */
     public Index[] value();
 
 }
