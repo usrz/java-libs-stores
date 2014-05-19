@@ -9,7 +9,7 @@
     </encoder>
   </appender>
 
-  <logger name="org.usrz.libs.mongodb" level="debug" />
+  <logger name="org.usrz.libs.stores" level="debug" />
 
   <root level="info">
     <appender-ref ref="stderr" />
