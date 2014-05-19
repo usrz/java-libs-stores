@@ -15,9 +15,7 @@
  * ========================================================================== */
 package org.usrz.libs.stores.annotations;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
@@ -28,15 +26,16 @@ import java.lang.annotation.Target;
 import org.usrz.libs.stores.Document;
 
 /**
- * An annotation defining that the <em>setter</em>, <em>getter</em> or
- * <em>field</em> identified by this must be stored as a simple
- * {@link Document} <em>reference</em> (simply collection and ID) rather than
- * being included in BSON serialization.
+ * An annotation defining the <em>collection</em> for a {@link Document}.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  */
 @Inherited
 @Documented
+@Target(TYPE)
 @Retention(RUNTIME)
-@Target({PARAMETER, FIELD, METHOD})
-public @interface Reference { }
+public @interface Collection {
+
+    String value();
+
+}
