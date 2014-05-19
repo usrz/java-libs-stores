@@ -18,6 +18,7 @@ package org.usrz.libs.stores.bson;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
+import java.util.UUID;
 
 public class TestBean {
 
@@ -25,6 +26,8 @@ public class TestBean {
     private Date theDate;
     private int theInteger;
     private Double theDouble;
+    private UUID theUUID;
+
     private NestedBean nested;
 
     public TestBean() {
@@ -38,6 +41,14 @@ public class TestBean {
 
     public void setTheString(String theString) {
         this.theString = theString;
+    }
+
+    public UUID getTheUUID() {
+        return theUUID;
+    }
+
+    public void setTheUUID(UUID theUUID) {
+        this.theUUID = theUUID;
     }
 
     public Date getTheDate() {
@@ -128,5 +139,4 @@ public class TestBean {
         }
 
     }
-
 }

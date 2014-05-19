@@ -15,16 +15,29 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import org.usrz.libs.stores.annotations.Id;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
 
-/**
- * The core interface defining a <em>storable</em> object.
- *
- * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
- */
-public interface Document {
+import java.lang.annotation.Target;
 
-    @Id
-    public String getId();
+@Target({TYPE, FIELD, METHOD})
+public @interface Index {
+
+    public enum Type { ASCENDING, DESCENDING, HASHED };
+    public enum Options { SPARSE, UNIQUE };
+
+    public @interface Key {
+        public String key();
+        public Type type();
+    }
+
+    public String name() default "";
+
+    public Type type() default Type.ASCENDING;
+
+    public Options[] sparse() default {};
+
+    public Key[] keys() default {};
 
 }

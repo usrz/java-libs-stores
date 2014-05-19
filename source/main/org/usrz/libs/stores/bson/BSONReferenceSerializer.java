@@ -13,33 +13,43 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores;
+package org.usrz.libs.stores.bson;
 
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.io.IOException;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.usrz.libs.stores.Document;
+import org.usrz.libs.stores.Store;
+import org.usrz.libs.utils.Check;
 
-import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.mongodb.DBRef;
 
-/**
- * A simple annotation usable in constructors when implementing the
- * {@link Document} interface or extending {@link AbstractDocument}.
- *
- * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
- */
-@Inherited
-@Documented
-@Retention(RUNTIME)
-@Target({PARAMETER})
+public class BSONReferenceSerializer<D extends Document> extends JsonSerializer<D> {
 
-@JsonProperty(Id.KEY)
-@JacksonAnnotationsInside
-public @interface Id {
+    private final Store<D> store;
 
-    public static final String KEY = "_id";
+    private BSONReferenceSerializer(Store<D> store) {
+        this.store = Check.notNull(store, "Null store");
+    }
+
+    public static <X extends Document> BSONReferenceSerializer<X> get(Store<X> store) {
+        return new BSONReferenceSerializer<X>(store);
+    }
+
+    @Override
+    public void serialize(final D object,
+                          final JsonGenerator jsonGenerator,
+                          final SerializerProvider serializerProvider)
+    throws IOException {
+        final DBRef ref = new DBRef(null, store.getCollection(), object.getId());
+        jsonGenerator.writeObject(ref);
+    }
+
+    @Override
+    public Class<D> handledType() {
+        return store.getType();
+    }
+
 }

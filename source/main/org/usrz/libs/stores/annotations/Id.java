@@ -13,18 +13,36 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores;
+package org.usrz.libs.stores.annotations;
 
-import org.usrz.libs.stores.annotations.Id;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import org.usrz.libs.stores.AbstractDocument;
+import org.usrz.libs.stores.Document;
 
 /**
- * The core interface defining a <em>storable</em> object.
+ * A simple annotation usable in constructors when implementing the
+ * {@link Document} interface or extending {@link AbstractDocument}.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  */
-public interface Document {
+@Inherited
+@Documented
+@Retention(RUNTIME)
+@Target({PARAMETER, FIELD, METHOD})
 
-    @Id
-    public String getId();
+//@JsonProperty(Id.KEY)
+//@JacksonAnnotationsInside
+public @interface Id {
+
+    public static final String KEY = "_id";
 
 }

@@ -29,11 +29,16 @@ public class BSONPropertyNamingStrategy extends PropertyNamingStrategyBase {
     public String translate(String propertyName) {
         if (propertyName == null) return propertyName;
         final StringBuilder builder = new StringBuilder();
+
+        boolean lastWasUpper = false;
         for (char c: propertyName.toCharArray()) {
             if (Character.isUpperCase(c)) {
-                builder.append('_').append(Character.toLowerCase(c));
+                if (! lastWasUpper) builder.append('_');
+                builder.append(Character.toLowerCase(c));
+                lastWasUpper = true;
             } else {
                 builder.append(c);
+                lastWasUpper = false;
             }
         }
         return builder.toString();

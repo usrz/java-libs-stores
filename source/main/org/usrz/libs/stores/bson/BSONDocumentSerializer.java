@@ -13,18 +13,39 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores;
+package org.usrz.libs.stores.bson;
 
-import org.usrz.libs.stores.annotations.Id;
+import java.io.IOException;
 
-/**
- * The core interface defining a <em>storable</em> object.
- *
- * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
- */
-public interface Document {
+import org.usrz.libs.stores.Document;
 
-    @Id
-    public String getId();
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
+public class BSONDocumentSerializer extends JsonSerializer<Document> {
+
+    public BSONDocumentSerializer() {
+
+        // TODO Auto-generated constructor stub
+    }
+
+    @Override
+    public void serialize(Document value,
+                          JsonGenerator jgen,
+                          SerializerProvider provider)
+    throws IOException, JsonProcessingException {
+        System.err.println("SERIALIZING -> " + value);
+        provider.defaultSerializeValue(value, jgen);
+
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public Class<Document> handledType() {
+        return Document.class;
+    }
 
 }

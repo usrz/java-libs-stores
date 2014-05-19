@@ -15,16 +15,23 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import org.usrz.libs.stores.annotations.Id;
+import java.lang.reflect.Type;
 
-/**
- * The core interface defining a <em>storable</em> object.
- *
- * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
- */
-public interface Document {
+import com.google.inject.TypeLiteral;
 
-    @Id
-    public String getId();
+public interface Stores {
+
+    public default <D extends Document> Store<D> getStore(Class<D> type) {
+        return getStore(TypeLiteral.get(type));
+    }
+
+    @SuppressWarnings("unchecked")
+    public default Store<?> getStore(Type type) {
+        return getStore((TypeLiteral<? extends Document>) TypeLiteral.get(type));
+    }
+
+    public <D extends Document> Store<D> getStore(TypeLiteral<D> type);
+
+    public Store<? extends Document> getStore(String collection);
 
 }

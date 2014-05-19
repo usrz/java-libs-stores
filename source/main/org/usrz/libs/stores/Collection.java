@@ -15,16 +15,29 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import org.usrz.libs.stores.annotations.Id;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import java.util.function.Consumer;
+
+import javassist.CtField.Initializer;
 
 /**
- * The core interface defining a <em>storable</em> object.
+ * An annotation defining a {@link Consumer} for {@link Initializer}s.
+ * <p>
+ * {@link Document} classes can be annotated with this annotation, and the
+ * specified {@link Consumer} will be invoked on creation and retrieval.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  */
-public interface Document {
+@Documented
+@Target(TYPE)
+@Retention(RUNTIME)
+public @interface Collection {
 
-    @Id
-    public String getId();
+    String value();
 
 }

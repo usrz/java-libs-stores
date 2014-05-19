@@ -13,36 +13,22 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores.bson;
+package org.usrz.libs.stores.annotations;
 
-import java.util.Date;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import org.bson.BSONObject;
-import org.testng.annotations.Test;
-import org.usrz.libs.testing.AbstractTest;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import com.google.inject.Guice;
+@Inherited
+@Documented
+@Retention(RUNTIME)
+@Target({PARAMETER, FIELD, METHOD})
+public @interface Reference {
 
-public class BSonMapperTest extends AbstractTest {
-
-    private final BSONObjectMapper mapper = Guice.createInjector().getInstance(BSONObjectMapper.class);
-
-    @Test
-    public void testMapper()
-    throws Exception {
-
-        final Date date = new Date();
-        final TestBean bean = new TestBean();
-        bean.setTheDate(date);
-        bean.setTheDouble(123.456);
-        bean.setTheInteger(987654321);
-        bean.setTheString("Hello, world!");
-
-        BSONObject object = mapper.writeValueAsBson(bean);
-
-        TestBean read = mapper.readValue(object, TestBean.class);
-
-        assertNotSame(read, bean);
-        assertEquals(read, bean);
-    }
 }
