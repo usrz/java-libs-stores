@@ -29,6 +29,9 @@ import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.annotations.Collection;
 import org.usrz.libs.stores.annotations.Id;
+import org.usrz.libs.stores.annotations.Index;
+import org.usrz.libs.stores.annotations.Index.Key;
+import org.usrz.libs.stores.annotations.Indexes;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
@@ -86,6 +89,13 @@ public class AnnotationsTest extends AbstractTest {
     /* ====================================================================== */
 
     @Collection(abstractsCollection)
+    @Index(name="type_1",
+           options=Indexes.Option.UNIQUE,
+           keys={@Key(field="foo", type=Indexes.Type.ASCENDING),
+                 @Key(field="bar", type=Indexes.Type.DESCENDING)})
+    @Index(name="type_2",
+           options=Indexes.Option.SPARSE,
+           keys={@Key(field="baz", type=Indexes.Type.HASHED)})
     public static abstract class AbstractBean extends AbstractDocument {
 
         @JsonCreator

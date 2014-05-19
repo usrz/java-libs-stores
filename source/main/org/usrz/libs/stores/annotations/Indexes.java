@@ -19,59 +19,23 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
-import static org.usrz.libs.stores.annotations.Indexes.Type.ASCENDING;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
-import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import org.usrz.libs.stores.Document;
-import org.usrz.libs.stores.annotations.Indexes.Option;
-import org.usrz.libs.stores.annotations.Indexes.Type;
-
-/**
- * An annotation for {@link Document} types specifying that an index must be
- * ensured for the specified property.
- * <pre>
- * {@literal @}Index(name="foo_index" ,
- *         options=Index.Options.UNIQUE ,
- *         keys={{@literal @}Key(field="foo", type=Index.Type.ASCENDING),
- *               {@literal @}Key(field="bar", type=Index.Type.DESCENDING)} )
- * public class MyDocument extends Document { ... }
- * </pre>
- *
- * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
- */
 @Inherited
 @Documented
-@Repeatable(Indexes.class)
 @Retention(RUNTIME)
 @Target({TYPE, FIELD, METHOD})
-public @interface Index {
+public @interface Indexes {
 
-    /**
-     * A <em>key</em> definition for an index, specifiable when this annotation
-     * is used on a <em>type</em> (and forbidden on <em>field</em>s or
-     * <em>method</em>s).
-     *
-     * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
-     */
-    public @interface Key {
-        /** The name of the property to index. */
-        public String field();
-        /** The type of the index to create (default {@link Type#ASCENDING}). */
-        public Type type() default ASCENDING;
-    }
+    /** The type of the index to create. */
+    public enum Type { ASCENDING, DESCENDING, HASHED };
+    /** The options for index creation. */
+    public enum Option { SPARSE, UNIQUE };
 
-    /** The name of the index to create. */
-    public String name() default "";
-
-    /** The options for the index to create. */
-    public Option[] options() default {};
-
-    /** The list of property keys to index. */
-    public Key[] keys();
+    public Index[] value();
 
 }
