@@ -28,7 +28,7 @@ import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Query;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
-import org.usrz.libs.utils.RandomString;
+import org.usrz.libs.utils.Strings;
 
 import com.google.inject.Injector;
 import com.mongodb.BasicDBObject;
@@ -78,7 +78,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
          * been specified in the type annotation, and something reading
          * our object
          */
-        final String id = RandomString.get(32);
+        final String id = Strings.random(32);
         if (consumer != null) {
             injector.injectMembers(consumer);
             return convert(id(id), consumer.andThen(creator));

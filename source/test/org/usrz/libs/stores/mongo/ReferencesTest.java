@@ -32,7 +32,7 @@ import org.usrz.libs.stores.annotations.Reference;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.RandomString;
+import org.usrz.libs.utils.Strings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,8 +43,8 @@ import com.mongodb.DBRef;
 
 public class ReferencesTest extends AbstractTest {
 
-    private final String referencingCollection = RandomString.get(16);
-    private final String referencedCollection = RandomString.get(16);
+    private final String referencingCollection = Strings.random(16);
+    private final String referencedCollection = Strings.random(16);
 
     @BeforeClass
     public void prepare()
@@ -84,7 +84,7 @@ public class ReferencesTest extends AbstractTest {
     throws Exception {
 
         /* Referenced bean comes first */
-        final String value = RandomString.get(16);
+        final String value = Strings.random(16);
         final ReferencedBean referencedBean = referencedStore.create();
         referencedBean.setValue(value);
         referencedStore.store(referencedBean);

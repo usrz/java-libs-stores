@@ -35,7 +35,7 @@ import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.RandomString;
+import org.usrz.libs.utils.Strings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -46,7 +46,7 @@ import com.mongodb.DB;
 
 public class StoreDefaultsTest extends AbstractTest {
 
-    private static final String collection = RandomString.get(16);
+    private static final String collection = Strings.random(16);
     private static final Log log = new Log();
 
     @Inject private DB db;

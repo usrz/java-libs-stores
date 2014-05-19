@@ -38,9 +38,6 @@ import org.usrz.libs.stores.Document;
 @Documented
 @Retention(RUNTIME)
 @Target({PARAMETER, FIELD, METHOD})
-
-//@JsonProperty(Id.KEY)
-//@JacksonAnnotationsInside
 public @interface Id {
 
     public static final String KEY = "_id";

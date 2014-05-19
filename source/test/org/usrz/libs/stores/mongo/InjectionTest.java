@@ -35,7 +35,7 @@ import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.RandomString;
+import org.usrz.libs.utils.Strings;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -52,7 +52,7 @@ public class InjectionTest extends AbstractTest {
     private static final List<Object> LIST = Collections.emptyList();
     private static final Set<Object> SET = Collections.emptySet();
 
-    private static final String collection = RandomString.get(16);
+    private static final String collection = Strings.random(16);
     private static final Log log = new Log();
 
     @Inject private Store<MyBean> store;

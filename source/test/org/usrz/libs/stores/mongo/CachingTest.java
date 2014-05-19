@@ -28,7 +28,7 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.RandomString;
+import org.usrz.libs.utils.Strings;
 import org.usrz.libs.utils.caches.Cache;
 import org.usrz.libs.utils.caches.SimpleCache;
 
@@ -37,7 +37,7 @@ import com.mongodb.DB;
 
 public class CachingTest extends AbstractTest {
 
-    private static final String collection = RandomString.get(16);
+    private static final String collection = Strings.random(16);
     private static final Log log = new Log();
 
     @Inject private Store<MyBean> store;

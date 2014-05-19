@@ -32,7 +32,7 @@ import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.RandomString;
+import org.usrz.libs.utils.Strings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,8 +41,8 @@ import com.mongodb.DB;
 
 public class StoreTest extends AbstractTest {
 
-    private final String abstractsCollection = RandomString.get(16);
-    private final String interfacesCollection = RandomString.get(16);
+    private final String abstractsCollection = Strings.random(16);
+    private final String interfacesCollection = Strings.random(16);
 
     @BeforeClass
     public void prepare()
@@ -98,7 +98,7 @@ public class StoreTest extends AbstractTest {
     public void testAbstracts()
     throws Exception {
 
-        final String value = RandomString.get(16);
+        final String value = Strings.random(16);
 
         AbstractBean bean = abstractsStore.create();
 
@@ -135,7 +135,7 @@ public class StoreTest extends AbstractTest {
     public void testInterfaces()
     throws Exception {
 
-        final String value = RandomString.get(16);
+        final String value = Strings.random(16);
 
         InterfaceBean bean = interfacesStore.create();
 

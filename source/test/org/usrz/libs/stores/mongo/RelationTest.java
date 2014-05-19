@@ -34,16 +34,16 @@ import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
-import org.usrz.libs.utils.RandomString;
+import org.usrz.libs.utils.Strings;
 
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
 public class RelationTest extends AbstractTest {
 
-    private final String fooCollection = RandomString.get(16);
-    private final String barCollection = RandomString.get(16);
-    private final String relCollection = RandomString.get(16);
+    private final String fooCollection = Strings.random(16);
+    private final String barCollection = Strings.random(16);
+    private final String relCollection = Strings.random(16);
     private final Log log = new Log();
 
     @BeforeClass
