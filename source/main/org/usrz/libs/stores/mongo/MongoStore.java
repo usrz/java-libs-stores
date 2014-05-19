@@ -20,6 +20,7 @@ import static org.usrz.libs.utils.Check.notNull;
 import java.io.IOException;
 import java.util.function.Consumer;
 
+import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.AbstractStore;
 import org.usrz.libs.stores.Cursor;
 import org.usrz.libs.stores.Defaults;
@@ -37,6 +38,8 @@ import com.mongodb.MongoException;
 
 
 public class MongoStore<D extends Document> extends AbstractStore<D> {
+
+    private static final Log log = new Log();
 
     private final DBCollection collection;
     private final BSONObjectMapper mapper;
@@ -60,6 +63,11 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     @Override
     public Class<D> getType() {
         return type;
+    }
+
+    @Override
+    public String getCollection() {
+        return collection.getName();
     }
 
     @Override
@@ -87,8 +95,10 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     @Override
     public D store(D object) {
         try {
-             collection.save(mapper.writeValueAsBson(object));
-             return object;
+            final BasicDBObject bson = mapper.writeValueAsBson(object);
+            log.debug("Saving %s in collection \"%s\"", bson, collection);
+            collection.save(bson);
+            return object;
         } catch (IOException exception) {
             throw new MongoException("Unable to map object to BSON", exception);
         }

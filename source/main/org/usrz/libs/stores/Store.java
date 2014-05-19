@@ -18,6 +18,7 @@ package org.usrz.libs.stores;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Defaults.Initializer;
+import org.usrz.libs.stores.annotations.Id;
 
 
 /**
@@ -32,6 +33,11 @@ public interface Store<D extends Document> {
      * Return the concrete {@link Class type} used by this {@link Store}.
      */
     public Class<D> getType();
+
+    /**
+     * Return the underlying collection name associated with the {@link Store}.
+     */
+    public String getCollection();
 
     /**
      * Create a new {@link Document} instance.
