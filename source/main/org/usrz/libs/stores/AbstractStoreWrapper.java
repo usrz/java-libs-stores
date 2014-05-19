@@ -45,6 +45,11 @@ public class AbstractStoreWrapper<D extends Document> implements Store<D> {
     }
 
     @Override
+    public String getCollection() {
+        return store.getCollection();
+    }
+
+    @Override
     public D create(Consumer<Initializer> consumer) {
         return store.create(consumer);
     }
