@@ -28,6 +28,7 @@ import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.Stores;
+import org.usrz.libs.stores.annotations.Collection;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.Injections;
 import org.usrz.libs.utils.beans.BeanBuilder;
@@ -84,6 +85,16 @@ public class MongoBuilder {
 
     /* ====================================================================== */
 
+    public <D extends Document> MongoStoreBuilder<D> store(Class<D> type) {
+        return store(TypeLiteral.get(type));
+    }
+
+    public <D extends Document> MongoStoreBuilder<D> store(TypeLiteral<D> type) {
+        final Collection collection = type.getRawType().getAnnotation(Collection.class);
+        if (collection == null) throw new IllegalArgumentException("Type " + type.getClass().getName() + " does not specify an @Collection annotation");
+        return this.store(type, collection.value());
+    }
+
     public <D extends Document> MongoStoreBuilder<D> store(Class<D> type, String collection) {
         return store(TypeLiteral.get(type), collection);
     }
@@ -94,6 +105,14 @@ public class MongoBuilder {
     }
 
     /* ---------------------------------------------------------------------- */
+
+    public <D extends Document> void store(Class<D> type, Consumer<MongoStoreBuilder<D>> consumer) {
+        consumer.accept(store(type));
+    }
+
+    public <D extends Document> void store(TypeLiteral<D> type, Consumer<MongoStoreBuilder<D>> consumer) {
+        consumer.accept(store(type));
+    }
 
     public <D extends Document> void store(Class<D> type, String collection, Consumer<MongoStoreBuilder<D>> consumer) {
         consumer.accept(store(type, collection));
