@@ -26,7 +26,6 @@ import com.mongodb.DBCollection;
 public class MongoRelation<L extends Document, R extends Document>
 extends AbstractRelation<L, R> {
 
-    private static final String ID = "_id";
     private static final String L = "l";
     private static final String R = "r";
 
@@ -75,7 +74,7 @@ extends AbstractRelation<L, R> {
     public Cursor<L> findL(R r) {
         /* Build our query on "R" returning only "L" */
         final BasicDBObject query = new BasicDBObject(R, r.getId().toString());
-        final BasicDBObject fields = new BasicDBObject(L, 1).append(ID, 0);
+        final BasicDBObject fields = new BasicDBObject(L, 1);
 
         /* Get our DB cursor and iterate over it */
         return new MongoCursor<L>(collection.find(query, fields),
@@ -86,7 +85,7 @@ extends AbstractRelation<L, R> {
     public Cursor<R> findR(L l) {
         /* Build our query on "L" returning only "R" */
         final BasicDBObject query = new BasicDBObject(L, l.getId().toString());
-        final BasicDBObject fields = new BasicDBObject(R, 1).append(ID, 0);
+        final BasicDBObject fields = new BasicDBObject(R, 1);
 
         /* Get our DB cursor and iterate over it */
         return new MongoCursor<R>(collection.find(query, fields),
