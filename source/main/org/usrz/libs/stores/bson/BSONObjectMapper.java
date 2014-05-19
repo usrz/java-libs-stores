@@ -54,7 +54,7 @@ public class BSONObjectMapper extends ObjectMapper {
         this.injector = injector;
         setInjectableValues(new GuiceInjectableValues(injector));
 
-        final GuiceAnnotationIntrospector guiceIntrospector = new GuiceAnnotationIntrospector();
+        final GuiceAnnotationIntrospector guiceIntrospector = injector.getInstance(BSONAnnotationIntrospector.class);
         final AnnotationIntrospector introspector = getSerializationConfig().getAnnotationIntrospector();
         setAnnotationIntrospectors(
             new AnnotationIntrospectorPair(guiceIntrospector, introspector),
