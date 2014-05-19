@@ -15,6 +15,7 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import static org.usrz.libs.stores.annotations.Id.ID;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.io.IOException;
@@ -126,7 +127,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     /* ====================================================================== */
 
     private BasicDBObject id(String id) {
-        return new BasicDBObject("_id", notNull(id, "Null ID"));
+        return new BasicDBObject(ID, notNull(id, "Null ID"));
     }
 
     /* ====================================================================== */

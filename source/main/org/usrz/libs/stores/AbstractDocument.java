@@ -38,7 +38,7 @@ public abstract class AbstractDocument implements Document {
     }
 
     @Override
-    @JsonProperty(Id.KEY)
+    @JsonProperty(Id.ID)
     public final String getId() {
         return id;
     }

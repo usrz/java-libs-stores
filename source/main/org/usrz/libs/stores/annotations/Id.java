@@ -40,6 +40,10 @@ import org.usrz.libs.stores.Document;
 @Target({PARAMETER, FIELD, METHOD})
 public @interface Id {
 
-    public static final String KEY = "_id";
+    /**
+     * The BSON field name for a {@link Document}
+     * <em>{@linkplain Document#getId() identifier}</em>.
+     */
+    public static final String ID = "_id";
 
 }

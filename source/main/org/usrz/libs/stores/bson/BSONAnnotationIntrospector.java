@@ -15,6 +15,8 @@
  * ========================================================================== */
 package org.usrz.libs.stores.bson;
 
+import static org.usrz.libs.stores.annotations.Id.ID;
+
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -58,37 +60,37 @@ public class BSONAnnotationIntrospector extends GuiceAnnotationIntrospector {
 
     @Override
     public PropertyName findNameForSerialization(Annotated a) {
-        return a.hasAnnotation(Id.class) ? new PropertyName("_id") : null;
+        return a.hasAnnotation(Id.class) ? new PropertyName(ID) : null;
     }
 
     @Override @Deprecated
     public String findSerializationName(AnnotatedField a) {
-        return a.hasAnnotation(Id.class) ? "_id" : null;
+        return a.hasAnnotation(Id.class) ? ID : null;
     }
 
     @Override @Deprecated
     public String findSerializationName(AnnotatedMethod a) {
-        return a.hasAnnotation(Id.class) ? "_id" : null;
+        return a.hasAnnotation(Id.class) ? ID : null;
     }
 
     @Override
     public PropertyName findNameForDeserialization(Annotated a) {
-        return a.hasAnnotation(Id.class) ? new PropertyName("_id") : null;
+        return a.hasAnnotation(Id.class) ? new PropertyName(ID) : null;
     }
 
     @Override @Deprecated
     public String findDeserializationName(AnnotatedMethod a) {
-        return a.hasAnnotation(Id.class) ? "_id" : null;
+        return a.hasAnnotation(Id.class) ? ID : null;
     }
 
     @Override @Deprecated
     public String findDeserializationName(AnnotatedField a) {
-        return a.hasAnnotation(Id.class) ? "_id" : null;
+        return a.hasAnnotation(Id.class) ? ID : null;
     }
 
     @Override @Deprecated
     public String findDeserializationName(AnnotatedParameter a) {
-        return a.hasAnnotation(Id.class) ? "_id" : null;
+        return a.hasAnnotation(Id.class) ? ID : null;
     }
 
     @Override

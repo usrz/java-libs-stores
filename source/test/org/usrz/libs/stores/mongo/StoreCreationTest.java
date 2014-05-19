@@ -15,6 +15,8 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import static org.usrz.libs.stores.annotations.Id.ID;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -184,7 +186,7 @@ public class StoreCreationTest extends AbstractTest {
         public void accept(Initializer initializer) {
             if (injector == null) throw new IllegalStateException("Not injected");
             initializer.property("sensible", "a sensible default")
-                       .property("_id", id); // this should be overridden!
+                       .property(ID, id); // this should be overridden!
         }
 
     }
