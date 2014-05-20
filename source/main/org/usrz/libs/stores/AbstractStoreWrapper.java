@@ -19,7 +19,7 @@ import static org.usrz.libs.utils.Check.notNull;
 
 import java.util.function.Consumer;
 
-import org.usrz.libs.stores.Defaults.Initializer;
+import org.usrz.libs.stores.annotations.Defaults.Initializer;
 
 /**
  * A <em>Wrapper</em> around another {@link Store}.

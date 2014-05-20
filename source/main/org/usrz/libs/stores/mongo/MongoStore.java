@@ -24,10 +24,10 @@ import java.util.function.Consumer;
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.AbstractStore;
 import org.usrz.libs.stores.Cursor;
-import org.usrz.libs.stores.Defaults;
-import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Query;
+import org.usrz.libs.stores.annotations.Defaults;
+import org.usrz.libs.stores.annotations.Defaults.Initializer;
 import org.usrz.libs.stores.annotations.Indexed;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.Strings;
@@ -54,14 +54,12 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     private final Injector injector;
     private final Class<D> type;
     private final Consumer<Initializer> creator;
-    private final Consumer<Initializer> updater;
 
     public MongoStore(BSONObjectMapper mapper,
                       Injector injector,
                       DBCollection collection,
                       Class<D> type) {
-        creator = Defaults.Finder.find(type, injector, true);
-        updater = Defaults.Finder.find(type, injector, false);
+        creator = Defaults.Finder.find(type, injector);
         this.collection = collection;
         this.injector = injector;
         this.mapper = mapper;
@@ -116,7 +114,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     @Override
     public D find(String id) {
-        return convert(collection.findOne(id(id)), updater);
+        return convert(collection.findOne(id(id)));
     }
 
     @Override
@@ -145,7 +143,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
             @Override
             public Cursor<D> documents() {
-                return new MongoCursor<D>(collection.find(query), (o) -> convert(o, updater));
+                return new MongoCursor<D>(collection.find(query), (o) -> convert(o));
             }
         };
     }
@@ -158,15 +156,18 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     /* ====================================================================== */
 
+    private D convert(DBObject object) {
+        return this.convert(object, null);
+    }
+
     private D convert(DBObject object, Consumer<Initializer> consumer) {
         if (object == null) return null;
 
-        consumer = consumer.andThen((initializer) -> {
-            object.keySet().forEach((key) -> {
-                final Object value = object.get(key);
-                initializer.property(key, value);
-            });
-        });
+        final Consumer<Initializer> copier = (initializer) ->
+                object.keySet().forEach((key) ->
+                        initializer.property(key, object.get(key)));
+
+        consumer = consumer == null ? copier : consumer.andThen(copier);
 
         try {
             /* Create an initializer and build our BSON + injectables */

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores;
+package org.usrz.libs.stores.annotations;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -24,6 +24,9 @@ import java.lang.annotation.Target;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import org.usrz.libs.stores.Document;
+import org.usrz.libs.utils.Check;
 
 import com.google.inject.Injector;
 
@@ -46,18 +49,6 @@ public @interface Defaults {
      */
     Class<? extends Consumer<Initializer>> value() default Finder.Null.class;
 
-    /**
-     * The {@link Consumer} for initialization used for creation of new
-     * {@link Document}s.
-     */
-    Class<? extends Consumer<Initializer>> create() default Finder.Null.class;
-
-    /**
-     * The {@link Consumer} for initialization used for retrieval of existing
-     * {@link Document}s.
-     */
-    Class<? extends Consumer<Initializer>> update() default Finder.Null.class;
-
     /* ===================================================================== */
 
     /**
@@ -69,9 +60,12 @@ public @interface Defaults {
      */
     public interface Initializer {
 
-        /**
-         * Set the property with the given name to the given value.
-         */
+        /** Set the property with the given name to the given value. */
+        default Initializer id(String id) {
+            return property(Id.ID, Check.notEmpty(id, "Invalid ID"));
+        }
+
+        /** Set the property with the given name to the given value. */
         public Initializer property(String name, Object value);
 
     }
@@ -99,7 +93,7 @@ public @interface Defaults {
         /**
          * Find the {@link Defaults} annotation value for a {@link Document}.
          */
-        public static final Consumer<Initializer> find(Class<? extends Document> type, Injector injector, boolean create) {
+        public static final Consumer<Initializer> find(Class<? extends Document> type, Injector injector) {
             final Set<Defaults> defaults = new HashSet<>();
             findDefaults(type, defaults);
             if (defaults.size() == 0) return NULL;
@@ -111,9 +105,7 @@ public @interface Defaults {
             }
             final Defaults annotation = defaults.iterator().next();
 
-            return injector.getInstance(annotation.value()).andThen(
-                       create ? injector.getInstance(annotation.create()) :
-                                injector.getInstance(annotation.update()));
+            return injector.getInstance(annotation.value());
         }
 
         private static void findDefaults(Class<?> type, Set<Defaults> defaults) {

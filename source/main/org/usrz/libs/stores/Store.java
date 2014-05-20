@@ -17,8 +17,9 @@ package org.usrz.libs.stores;
 
 import java.util.function.Consumer;
 
-import org.usrz.libs.stores.Defaults.Initializer;
+import org.usrz.libs.stores.annotations.Defaults;
 import org.usrz.libs.stores.annotations.Id;
+import org.usrz.libs.stores.annotations.Defaults.Initializer;
 
 
 /**
@@ -48,10 +49,10 @@ public interface Store<D extends Document> {
 
     /**
      * Create a new {@link Document} instance, using the specified
-     * {@link Consumer} to initialize its default.
+     * {@link Consumer} to initialize its defaults.
      * <p>
      * If the {@link Document} class is also annotated with the {@link Defaults}
-     * annotation, bot {@link Consumer}s will be invoked in order, first the
+     * annotation, both {@link Consumer}s will be invoked in order, first the
      * one from the annotation, then the one specified here.
      */
     public D create(Consumer<Initializer> consumer);
