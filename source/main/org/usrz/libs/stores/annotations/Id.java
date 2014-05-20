@@ -48,7 +48,7 @@ public @interface Id {
 
     /**
      * The BSON field name for a {@link Document}
-     * <em>{@linkplain Document#getId() identifier}</em>.
+     * <em>{@linkplain Document#id() identifier}</em>.
      */
     public static final String ID = "_id";
 

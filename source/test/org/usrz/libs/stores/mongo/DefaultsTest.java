@@ -86,7 +86,7 @@ public class DefaultsTest extends AbstractTest {
         assertNotNull(bean, "Null bean created");
 
         assertEquals(bean.getSensibleDefault(), "a sensible default");
-        assertNotEquals(bean.getId(), id);
+        assertNotEquals(bean.id(), id);
         assertNull(bean.nullable);
         assertSame(bean.map, map);
 
@@ -94,11 +94,11 @@ public class DefaultsTest extends AbstractTest {
 
         store.store(bean);
 
-        final MyBean bean2 = store.find(bean.getId());
+        final MyBean bean2 = store.find(bean.id());
         assertNotNull(bean2, "Null bean created");
 
         assertEquals(bean2.getSensibleDefault(), "we override the default");
-        assertEquals(bean2.getId(), bean.getId());
+        assertEquals(bean2.id(), bean.id());
         assertNull(bean.nullable);
         assertSame(bean.map, map);
 
@@ -124,7 +124,7 @@ public class DefaultsTest extends AbstractTest {
         assertNotNull(bean, "Null bean created");
 
         assertEquals(bean.getSensibleDefault(), "a sensible default");
-        assertNotEquals(bean.getId(), id);
+        assertNotEquals(bean.id(), id);
         assertEquals(bean.nullable, "not a null string");
         assertSame(bean.map, map);
 
@@ -132,11 +132,11 @@ public class DefaultsTest extends AbstractTest {
 
         store.store(bean);
 
-        final MyBean bean2 = store.find(bean.getId());
+        final MyBean bean2 = store.find(bean.id());
         assertNotNull(bean2, "Null bean created");
 
         assertEquals(bean2.getSensibleDefault(), "we override the default");
-        assertEquals(bean2.getId(), bean.getId());
+        assertEquals(bean2.id(), bean.id());
         assertEquals(bean.nullable, "not a null string");
         assertSame(bean.map, map);
 

@@ -46,7 +46,7 @@ public abstract class AbstractDocument implements Document {
 
     @Override
     @Id @JsonProperty(ID)
-    public final String getId() {
+    public final String id() {
         return id;
     }
 
@@ -66,12 +66,12 @@ public abstract class AbstractDocument implements Document {
 
     @Override
     public String toString() {
-        return getClass().getName() + "[" + getId() + "]@" + toHexString(hashCode());
+        return getClass().getName() + "[" + id() + "]@" + toHexString(hashCode());
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode() ^ getId().hashCode();
+        return getClass().hashCode() ^ id().hashCode();
     }
 
     @Override
@@ -81,7 +81,7 @@ public abstract class AbstractDocument implements Document {
         try {
             final Document document = (Document) object;
             return document.getClass().equals(getClass())
-                && document.getId().equals(getId());
+                && document.id().equals(id());
         } catch (ClassCastException exception) {
             return false;
         }

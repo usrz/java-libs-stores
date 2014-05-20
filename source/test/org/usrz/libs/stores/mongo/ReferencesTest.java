@@ -88,11 +88,11 @@ public class ReferencesTest extends AbstractTest {
         final ReferencedBean referencedBean = referencedStore.create();
         referencedBean.setValue(value);
         referencedStore.store(referencedBean);
-        final ReferencedBean referencedBean2 = referencedStore.find(referencedBean.getId());
+        final ReferencedBean referencedBean2 = referencedStore.find(referencedBean.id());
 
         assertNotNull(referencedBean2);
         assertNotSame(referencedBean2, referencedBean);
-        assertEquals(referencedBean2.getId(), referencedBean.getId());
+        assertEquals(referencedBean2.id(), referencedBean.id());
         assertEquals(referencedBean2.getValue(), referencedBean.getValue());
 
         /* Let's create and store the referencing bean */
@@ -103,21 +103,21 @@ public class ReferencesTest extends AbstractTest {
         assertNotNull(referencingBean.getReferenced());
 
         /* Verify that in the DB we saved only the reference */
-        final DBObject object = db.getCollection(referencingCollection).findOne(referencingBean.getId());
+        final DBObject object = db.getCollection(referencingCollection).findOne(referencingBean.id());
         assertNotNull(object);
         final DBRef reference = (DBRef) object.get("referenced");
         assertNotNull(reference);
-        assertEquals(reference.getId(), referencedBean.getId());
+        assertEquals(reference.getId(), referencedBean.id());
         assertEquals(reference.getRef(), referencedCollection);
 
         /* Reload the document from the store and make sure we got the right stuff */
-        final ReferencingBean referencingBean2 = referencingStore.find(referencingBean.getId());
+        final ReferencingBean referencingBean2 = referencingStore.find(referencingBean.id());
         assertNotNull(referencingBean2);
 
         final ReferencedBean referencedBean3 = referencingBean2.getReferenced();
         assertNotNull(referencedBean3);
         assertNotSame(referencedBean3, referencedBean);
-        assertEquals(referencedBean3.getId(), referencedBean.getId());
+        assertEquals(referencedBean3.id(), referencedBean.id());
         assertEquals(referencedBean3.getValue(), referencedBean.getValue());
 
     }

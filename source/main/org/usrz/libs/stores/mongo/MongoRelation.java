@@ -48,8 +48,8 @@ extends AbstractRelation<L, R> {
 
     private BasicDBObject object(L l, R r) {
         return new BasicDBObject()
-                         .append(L, l.getId())
-                         .append(R, r.getId());
+                         .append(L, l.id())
+                         .append(R, r.id());
     }
 
     /* ====================================================================== */
@@ -73,7 +73,7 @@ extends AbstractRelation<L, R> {
     @Override
     public Cursor<L> findL(R r) {
         /* Build our query on "R" returning only "L" */
-        final BasicDBObject query = new BasicDBObject(R, r.getId().toString());
+        final BasicDBObject query = new BasicDBObject(R, r.id().toString());
         final BasicDBObject fields = new BasicDBObject(L, 1);
 
         /* Get our DB cursor and iterate over it */
@@ -84,7 +84,7 @@ extends AbstractRelation<L, R> {
     @Override
     public Cursor<R> findR(L l) {
         /* Build our query on "L" returning only "R" */
-        final BasicDBObject query = new BasicDBObject(L, l.getId().toString());
+        final BasicDBObject query = new BasicDBObject(L, l.id().toString());
         final BasicDBObject fields = new BasicDBObject(R, 1);
 
         /* Get our DB cursor and iterate over it */

@@ -73,17 +73,17 @@ public class CachingTest extends AbstractTest {
 
         final MyBean bean = store.create();
         assertNotNull(bean, "Null bean created");
-        assertNull(cache.fetch(bean.getId()), "Cached on creation");
+        assertNull(cache.fetch(bean.id()), "Cached on creation");
 
         store.store(bean);
-        assertNotNull(cache.fetch(bean.getId()), "Not cached on store");
+        assertNotNull(cache.fetch(bean.id()), "Not cached on store");
 
-        cache.invalidate(bean.getId());
-        assertNull(cache.fetch(bean.getId()), "Cache not invalidated");
+        cache.invalidate(bean.id());
+        assertNull(cache.fetch(bean.id()), "Cache not invalidated");
 
-        final MyBean bean2 = store.find(bean.getId());
+        final MyBean bean2 = store.find(bean.id());
         assertNotNull(bean2, "Stored bean not found");
-        assertNotNull(cache.fetch(bean2.getId()), "Not cached on find");
+        assertNotNull(cache.fetch(bean2.id()), "Not cached on find");
 
     }
 

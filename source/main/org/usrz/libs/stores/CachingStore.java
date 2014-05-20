@@ -44,8 +44,8 @@ public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
 
         final D document = super.find(id);
         if (document != null) {
-            log.debug("Caching document %s on fetch", document.getId());
-            cache.store(document.getId(), document);
+            log.debug("Caching document %s on fetch", document.id());
+            cache.store(document.id(), document);
         }
         return document;
     }
@@ -54,8 +54,8 @@ public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
     public D store(D object) {
         final D document = super.store(object);
         if (document != null) {
-            log.debug("Caching document %s on store", document.getId());
-            cache.store(document.getId(), document);
+            log.debug("Caching document %s on store", document.id());
+            cache.store(document.id(), document);
         }
         return document;
     }

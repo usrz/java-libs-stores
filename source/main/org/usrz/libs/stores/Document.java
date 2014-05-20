@@ -34,7 +34,7 @@ public interface Document {
      * @return A <b>non-null</b> {@link String}.
      */
     @Id
-    public String getId();
+    public String id();
 
     /**
      * Return when this {@link Document} was last

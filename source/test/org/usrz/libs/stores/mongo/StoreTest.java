@@ -126,7 +126,7 @@ public class StoreTest extends AbstractTest {
         assertNotNull(bean.getLastModifiedAt());
         final Date date1 = bean.getLastModifiedAt();
 
-        bean = abstractsStore.find(bean.getId());
+        bean = abstractsStore.find(bean.id());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
         assertEquals(bean.getLastModifiedAt(), date1);
@@ -137,7 +137,7 @@ public class StoreTest extends AbstractTest {
         assertNotEquals(bean.getLastModifiedAt(), date1);
         final Date date2 = bean.getLastModifiedAt();
 
-        bean = abstractsStore.find(bean.getId());
+        bean = abstractsStore.find(bean.id());
         assertEquals(bean.getLastModifiedAt(), date2);
     }
 
@@ -183,7 +183,7 @@ public class StoreTest extends AbstractTest {
         assertNotNull(bean.getLastModified());
         final Date date1 = bean.getLastModified();
 
-        bean = interfacesStore.find(bean.getId());
+        bean = interfacesStore.find(bean.id());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
         assertEquals(bean.getLastModified(), date1);
@@ -194,7 +194,7 @@ public class StoreTest extends AbstractTest {
         assertNotEquals(bean.getLastModified(), date1);
         final Date date2 = bean.getLastModified();
 
-        bean = interfacesStore.find(bean.getId());
+        bean = interfacesStore.find(bean.id());
         assertEquals(bean.getLastModified(), date2);
 
     }

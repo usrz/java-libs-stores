@@ -85,7 +85,7 @@ public class LastModifiedTest extends AbstractTest {
         assertNotNull(bean.lastModifiedAt());
         final Date date1 = bean.lastModifiedAt();
 
-        bean = abstractsStore.find(bean.getId());
+        bean = abstractsStore.find(bean.id());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
         assertEquals(bean.lastModifiedAt(), date1);
@@ -96,7 +96,7 @@ public class LastModifiedTest extends AbstractTest {
         assertNotEquals(bean.lastModifiedAt(), date1);
         final Date date2 = bean.lastModifiedAt();
 
-        bean = abstractsStore.find(bean.getId());
+        bean = abstractsStore.find(bean.id());
         assertEquals(bean.lastModifiedAt(), date2);
     }
 
