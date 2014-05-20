@@ -15,7 +15,14 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import static org.usrz.libs.stores.annotations.Indexes.Option.SPARSE;
+import static org.usrz.libs.stores.annotations.Indexes.Option.UNIQUE;
+import static org.usrz.libs.stores.annotations.Indexes.Type.ASCENDING;
+import static org.usrz.libs.stores.annotations.Indexes.Type.DESCENDING;
+import static org.usrz.libs.stores.annotations.Indexes.Type.HASHED;
+
 import java.io.IOException;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -31,15 +38,16 @@ import org.usrz.libs.stores.annotations.Collection;
 import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.annotations.Index;
 import org.usrz.libs.stores.annotations.Index.Key;
-import org.usrz.libs.stores.annotations.Indexes;
+import org.usrz.libs.stores.annotations.Indexed;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
+import com.mongodb.DBObject;
 
 public class AnnotationsTest extends AbstractTest {
 
@@ -79,23 +87,70 @@ public class AnnotationsTest extends AbstractTest {
 
     /* ====================================================================== */
 
+    private void testIndexes(Store<?> store) {
+        final String collection = store.getCollection();
+        final List<DBObject> indexes = db.getCollection(collection).getIndexInfo();
+
+        for (DBObject index: indexes) log.info("Found index %s", index);
+
+        assertEquals(indexes.size(), 5);
+        assertTrue(indexes.contains(new BasicDBObject("v", 1)
+                                              .append("name", "_id_")
+                                              .append("ns", "test." + collection)
+                                              .append("key", new BasicDBObject("_id", 1))));
+
+        assertTrue(indexes.contains(new BasicDBObject("v", 1)
+                                              .append("name", "type_1")
+                                              .append("unique", true)
+                                              .append("expireAfterSeconds", 86400)
+                                              .append("ns", "test." + collection)
+                                              .append("key", new BasicDBObject("foo", 1).append("bar", -1))));
+
+        assertTrue(indexes.contains(new BasicDBObject("v", 1)
+                                              .append("name", "type_2")
+                                              .append("sparse", true)
+                                              .append("ns", "test." + collection)
+                                              .append("key", new BasicDBObject("baz", "hashed"))));
+
+        assertTrue(indexes.contains(new BasicDBObject("v", 1)
+                                              .append("name", "hello")
+                                              .append("expireAfterSeconds", 3600)
+                                              .append("ns", "test." + collection)
+                                              .append("key", new BasicDBObject("value_1", 1))));
+
+        assertTrue(indexes.contains(new BasicDBObject("v", 1)
+                                              .append("name", "value_2_hashed")
+                                              .append("ns", "test." + collection)
+                                              .append("key", new BasicDBObject("value_2", "hashed"))));
+    }
+
+    /* ====================================================================== */
+
     @Test
-    public void testAnnotations()
+    public void testAbstractsAnnotations()
     throws Exception {
         assertEquals(abstractsStore.getCollection(), abstractsCollection);
+        testIndexes(abstractsStore);
+    }
+
+    @Test
+    public void testInterfacesAnnotations()
+    throws Exception {
         assertEquals(interfacesStore.getCollection(), interfacesCollection);
+        testIndexes(interfacesStore);
     }
 
     /* ====================================================================== */
 
     @Collection(abstractsCollection)
     @Index(name="type_1",
-           options=Indexes.Option.UNIQUE,
-           keys={@Key(field="foo", type=Indexes.Type.ASCENDING),
-                 @Key(field="bar", type=Indexes.Type.DESCENDING)})
+           options=UNIQUE,
+           expiresAfter="1 day",
+           keys={@Key(field="foo", type=ASCENDING),
+                 @Key(field="bar", type=DESCENDING)})
     @Index(name="type_2",
-           options=Indexes.Option.SPARSE,
-           keys={@Key(field="baz", type=Indexes.Type.HASHED)})
+           options=SPARSE,
+           keys={@Key(field="baz", type=HASHED)})
     public static abstract class AbstractBean extends AbstractDocument {
 
         @JsonCreator
@@ -103,22 +158,41 @@ public class AnnotationsTest extends AbstractTest {
             super(id);
         }
 
-        @JsonProperty("value")
-        public abstract String getValue();
+        @Indexed(name="hello", expiresAfter="1 hour")
+        public abstract String getValue1();
 
-        @JsonProperty("value")
-        public abstract void setValue(String value);
+        public abstract void setValue1(String value);
+
+        public abstract String getValue2();
+
+        @Indexed(type=HASHED)
+        public abstract void setValue2(String value);
 
     }
 
+    /* ====================================================================== */
+
+
     @Collection(interfacesCollection)
+    @Index(name="type_1",
+           options=UNIQUE,
+           expiresAfter="1 day",
+           keys={@Key(field="foo", type=ASCENDING),
+                 @Key(field="bar", type=DESCENDING)})
+    @Index(name="type_2",
+           options=SPARSE,
+           keys={@Key(field="baz", type=HASHED)})
     public static interface InterfaceBean extends Document {
 
-        @JsonProperty("value")
-        public abstract String getValue();
+        @Indexed(name="hello", expiresAfter="1 hour")
+        public abstract String getValue1();
 
-        @JsonProperty("value")
-        public abstract void setValue(String value);
+        public abstract void setValue1(String value);
+
+        public abstract String getValue2();
+
+        @Indexed(type=HASHED)
+        public abstract void setValue2(String value);
 
     }
 }

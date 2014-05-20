@@ -35,7 +35,6 @@ import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.Strings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
@@ -121,10 +120,8 @@ public class StoreTest extends AbstractTest {
             super(id);
         }
 
-        @JsonProperty("value")
         public abstract String getValue();
 
-        @JsonProperty("value")
         public abstract void setValue(String value);
 
     }
@@ -153,10 +150,8 @@ public class StoreTest extends AbstractTest {
 
     public static interface InterfaceBean extends Document {
 
-        @JsonProperty("value")
         public abstract String getValue();
 
-        @JsonProperty("value")
         public abstract void setValue(String value);
 
     }

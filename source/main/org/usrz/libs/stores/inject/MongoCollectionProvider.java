@@ -16,29 +16,25 @@
 package org.usrz.libs.stores.inject;
 
 import static org.usrz.libs.utils.Check.notEmpty;
-import static org.usrz.libs.utils.Check.notNull;
 
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-import org.usrz.libs.logging.Log;
+import org.usrz.libs.stores.mongo.MongoIndex;
 import org.usrz.libs.utils.Injections;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 
 public class MongoCollectionProvider implements Provider<DBCollection> {
 
-    private final Log log = new Log();
-    private final Map<BasicDBObject, BasicDBObject> indexes = new HashMap<>();
+    private final List<MongoIndex> indexes = new ArrayList<>();
     private final Key<DB> database;
     private final String name;
 
@@ -55,49 +51,9 @@ public class MongoCollectionProvider implements Provider<DBCollection> {
     }
 
     public MongoIndexBuilder requireIndex() {
-        final BasicDBObject index = new BasicDBObject();
-        final BasicDBObject options = new BasicDBObject();
-        indexes.put(index, options);
-
-        return new MongoIndexBuilder() {
-
-            @Override
-            public MongoIndexBuilder withName(String name) {
-                options.put("name", notNull(name, "Null name"));
-                return this;
-            }
-
-            @Override
-            public MongoIndexBuilder withKey(String key, Type type) {
-                switch (notNull(type, "Null type")) {
-                    case ASCENDING:  index.append(notNull(key, "Null name"),  1);       break;
-                    case DESCENDING: index.append(notNull(key, "Null name"), -1);       break;
-                    case HASHED:     index.append(notNull(key, "Null name"), "hashed"); break;
-                    default: throw new IllegalArgumentException("Unsupported type "  + type);
-                }
-                return this;
-            }
-
-            @Override
-            public MongoIndexBuilder unique(boolean unique) {
-                options.put("unique", unique);
-                return this;
-            }
-
-            @Override
-            public MongoIndexBuilder sparse(boolean sparse) {
-                options.put("sparse", sparse);
-                return this;
-            }
-
-            @Override
-            public MongoIndexBuilder expiresAfterSeconds(long seconds) {
-                if ((seconds > Integer.MAX_VALUE) || (seconds < 0))
-                    throw new IllegalArgumentException("Invalid expiration: " + seconds + " seconds");
-                options.put("expireAfterSeconds", (int) seconds);
-                return this;
-            }
-        };
+        final MongoIndex index = new MongoIndex();
+        indexes.add(index);
+        return index;
     }
 
     @Inject
@@ -106,10 +62,7 @@ public class MongoCollectionProvider implements Provider<DBCollection> {
         final DBCollection collection = database.getCollection(name);
 
         /* Indexes */
-        for (Entry<BasicDBObject, BasicDBObject> entry: indexes.entrySet()) {
-            log.debug("Ensuring index on collection %s: keys: %s, options: %s", collection, entry.getKey(), entry.getValue());
-            collection.ensureIndex(entry.getKey(), entry.getValue());
-        }
+        for (MongoIndex index: indexes) index.ensureIndex(collection);
 
         /* Done */
         this.collection = collection;

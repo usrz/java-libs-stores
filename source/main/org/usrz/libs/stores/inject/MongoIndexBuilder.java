@@ -15,15 +15,19 @@
  * ========================================================================== */
 package org.usrz.libs.stores.inject;
 
-import static org.usrz.libs.stores.inject.MongoIndexBuilder.Type.ASCENDING;
-import static org.usrz.libs.stores.inject.MongoIndexBuilder.Type.DESCENDING;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.usrz.libs.stores.annotations.Indexes.Type.ASCENDING;
+import static org.usrz.libs.stores.annotations.Indexes.Type.DESCENDING;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
+import org.usrz.libs.stores.annotations.Indexes.Option;
+import org.usrz.libs.stores.annotations.Indexes.Type;
+import org.usrz.libs.utils.Times;
 
 public interface MongoIndexBuilder {
-
-    public enum Type { ASCENDING, DESCENDING, HASHED };
 
     public MongoIndexBuilder withName(String name);
 
@@ -38,20 +42,27 @@ public interface MongoIndexBuilder {
     public MongoIndexBuilder withKey(String key, Type type);
 
     default MongoIndexBuilder unique() {
-        return this.unique(true);
+        return withOptions(Option.UNIQUE);
     }
-
-    public MongoIndexBuilder unique(boolean unique);
 
     default MongoIndexBuilder sparse() {
-        return this.sparse(true);
+        return withOptions(Option.SPARSE);
     }
 
-    public MongoIndexBuilder sparse(boolean sparse);
+    public MongoIndexBuilder withOptions(Option... options);
+
+    default MongoIndexBuilder expiresAfter(String duration) {
+        return expiresAfter(Times.duration(notNull(duration, "Null duration")));
+    }
 
     default MongoIndexBuilder expiresAfter(Duration duration) {
         return expiresAfterSeconds(notNull(duration, "Null duration").getSeconds());
     }
 
+    default MongoIndexBuilder expiresAfter(long amount, TimeUnit unit) {
+        return expiresAfterSeconds(SECONDS.convert(amount, unit));
+    }
+
     public MongoIndexBuilder expiresAfterSeconds(long seconds);
+
 }

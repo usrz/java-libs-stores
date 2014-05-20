@@ -18,10 +18,16 @@ package org.usrz.libs.stores.inject;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
+import org.usrz.libs.stores.annotations.Index;
+import org.usrz.libs.stores.mongo.MongoIndex;
 import org.usrz.libs.utils.caches.Cache;
 
 import com.google.inject.Binder;
@@ -29,6 +35,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.google.inject.util.Types;
 import com.mongodb.DBCollection;
+
 
 public class MongoStoreBuilder<D extends Document> {
 
@@ -58,7 +65,34 @@ public class MongoStoreBuilder<D extends Document> {
         @SuppressWarnings("unchecked")
         final TypeLiteral<Store<D>> storeType = (TypeLiteral<Store<D>>) TypeLiteral.get(Types.newParameterizedType(Store.class, type.getType()));
         binder.bind(storeType).toProvider(new MongoStoreProvider<D>(unique, type, collection));
+
+        /* Process @Index annotations */
+        processIndexAnnotations(discoverIndexAnnotations(type.getRawType()));
     }
+
+    /* ====================================================================== */
+
+    private Set<Index> discoverIndexAnnotations(Class<?> type) {
+        if (type == null) return Collections.emptySet();
+
+        final Set<Index> annotations = new HashSet<>();
+        for (Index index : type.getAnnotationsByType(Index.class)) {
+            annotations.add(index);
+        }
+        for (Class<?> interfaceClass : type.getInterfaces()) {
+            annotations.addAll(discoverIndexAnnotations(interfaceClass));
+        }
+        annotations.addAll(discoverIndexAnnotations(type.getSuperclass()));
+        return annotations;
+    }
+
+    private void processIndexAnnotations(Collection<Index> annotations) {
+        for (Index index: annotations) {
+            this.withIndex((builder) -> ((MongoIndex) builder).withAnnotation(index));
+        }
+    }
+
+    /* ====================================================================== */
 
     public MongoIndexBuilder createIndex() {
         return collection.requireIndex();

@@ -28,9 +28,16 @@ import org.usrz.libs.stores.Defaults;
 import org.usrz.libs.stores.Defaults.Initializer;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Query;
+import org.usrz.libs.stores.annotations.Indexed;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.utils.Strings;
 
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
+import com.fasterxml.jackson.databind.type.SimpleType;
 import com.google.inject.Injector;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -59,6 +66,23 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         this.injector = injector;
         this.mapper = mapper;
         this.type = type;
+
+        /* Figure out possible indexes from the bean description */
+        final JavaType javaType = SimpleType.construct(type);
+        final SerializationConfig config = mapper.getSerializationConfig();
+        final BeanDescription description = config.getClassIntrospector().forSerialization(config, javaType, null);
+        for (BeanPropertyDefinition property: description.findProperties()) {
+            /* Jackson copies annotations from mutator to accessor, too */
+            ensureIndex(property.getName(), property.getAccessor());
+        }
+
+    }
+
+    private void ensureIndex(String property, AnnotatedMember member) {
+        final Indexed annotation = member.getAnnotation(Indexed.class);
+        if (annotation != null) {
+            new MongoIndex().withAnnotation(property, annotation).ensureIndex(collection);
+        }
     }
 
     @Override
