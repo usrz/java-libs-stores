@@ -32,7 +32,7 @@ public class BSONPropertyNamingStrategy extends PropertyNamingStrategyBase {
 
         boolean lastWasUpper = false;
         for (char c: propertyName.toCharArray()) {
-            if (Character.isUpperCase(c)) {
+            if (Character.isUpperCase(c) || Character.isDigit(c)) {
                 if (! lastWasUpper) builder.append('_');
                 builder.append(Character.toLowerCase(c));
                 lastWasUpper = true;
