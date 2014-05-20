@@ -79,7 +79,7 @@ public interface Store<D extends Document> {
      * Create and store a new {@link Document}.
      *
      * @see #create()
-     * @see #store()
+     * @see #store(Document)
      */
     default D storeNew() {
         return store(create());
@@ -90,7 +90,7 @@ public interface Store<D extends Document> {
      * {@link Consumer}.
      *
      * @see #create(Consumer)
-     * @see #store()
+     * @see #store(Document)
      */
     default D storeNew(Consumer<Initializer> consumer) {
         return store(create(consumer));

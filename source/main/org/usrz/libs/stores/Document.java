@@ -28,9 +28,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public interface Document {
 
+    /**
+     * Return the unique identifier of this {@link Document}.
+     *
+     * @return A <b>non-null</b> {@link String}.
+     */
     @Id
     public String getId();
 
+    /**
+     * Return when this {@link Document} was last
+     * {@linkplain Store#store(Document) stored} or <b>null</b>.
+     */
     @JsonIgnore
     public Date lastModifiedAt();
 
