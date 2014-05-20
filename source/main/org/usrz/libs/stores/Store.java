@@ -18,8 +18,8 @@ package org.usrz.libs.stores;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.annotations.Defaults;
-import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.annotations.Defaults.Initializer;
+import org.usrz.libs.stores.annotations.Id;
 
 
 /**
@@ -42,6 +42,9 @@ public interface Store<D extends Document> {
 
     /**
      * Create a new {@link Document} instance.
+     * <p>
+     * If the {@link Document} class is annotated with the {@link Defaults}
+     * annotation, its {@link Consumer}s will be invoked.
      */
     public default D create() {
         return create((initializer) -> {});
@@ -61,6 +64,27 @@ public interface Store<D extends Document> {
      * Find the {@link Document} associated with the specified {@link Id}.
      */
     public D find(String id);
+
+    /**
+     * Create and store a new {@link Document}.
+     *
+     * @see #create()
+     * @see #store()
+     */
+    default D storeNew() {
+        return store(create());
+    }
+
+    /**
+     * Create and store a new {@link Document} initialized with the specified
+     * {@link Consumer}.
+     *
+     * @see #create(Consumer)
+     * @see #store()
+     */
+    default D storeNew(Consumer<Initializer> consumer) {
+        return store(create(consumer));
+    }
 
     /**
      * Store the specified {@link Document}.
