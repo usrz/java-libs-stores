@@ -91,8 +91,8 @@ public class MongoBuilder {
 
     public <D extends Document> MongoStoreBuilder<D> store(TypeLiteral<D> type) {
         final Collection collection = type.getRawType().getAnnotation(Collection.class);
-        if (collection == null) throw new IllegalArgumentException("Type " + type.getClass().getName() + " does not specify an @Collection annotation");
-        return this.store(type, collection.value());
+        if (collection != null) return this.store(type, collection.value());
+        throw new IllegalArgumentException("Type " + type.getClass().getName() + " does not specify an @Collection annotation");
     }
 
     public <D extends Document> MongoStoreBuilder<D> store(Class<D> type, String collection) {

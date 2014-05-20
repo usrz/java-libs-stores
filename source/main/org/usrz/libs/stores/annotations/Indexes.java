@@ -37,6 +37,7 @@ public @interface Indexes {
 
     /** The type of the index to create. */
     public enum Type { ASCENDING, DESCENDING, HASHED };
+
     /** The options for index creation. */
     public enum Option { SPARSE, UNIQUE };
 
