@@ -71,18 +71,20 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         final JavaType javaType = SimpleType.construct(type);
         final SerializationConfig config = mapper.getSerializationConfig();
         final BeanDescription description = config.getClassIntrospector().forSerialization(config, javaType, null);
-        for (BeanPropertyDefinition property: description.findProperties()) {
-            /* Jackson copies annotations from mutator to accessor, too */
-            ensureIndex(property.getName(), property.getAccessor());
-        }
-
+        for (BeanPropertyDefinition property: description.findProperties()) ensureIndex(property);
     }
 
-    private void ensureIndex(String property, AnnotatedMember member) {
+    private void ensureIndex(BeanPropertyDefinition property) {
+        final String name = property.getName();
+        final AnnotatedMember accessor = property.getAccessor();
+        final AnnotatedMember mutator = property.getMutator();
+
+        /* Jackson copies annotations from mutator to accessor, too */
+        final AnnotatedMember member = accessor != null ? accessor : mutator;
+
         final Indexed annotation = member.getAnnotation(Indexed.class);
-        if (annotation != null) {
-            new MongoIndex().withAnnotation(property, annotation).ensureIndex(collection);
-        }
+        if (annotation == null) return;
+        new MongoIndex().withAnnotation(name, annotation).ensureIndex(collection);
     }
 
     @Override
