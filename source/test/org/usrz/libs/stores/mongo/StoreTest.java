@@ -120,25 +120,25 @@ public class StoreTest extends AbstractTest {
         bean.setValue(value);
 
         assertEquals(bean.getValue(), value);
-        assertNull(bean.getLastModified());
+        assertNull(bean.getLastModifiedAt());
 
         bean = abstractsStore.store(bean);
-        assertNotNull(bean.getLastModified());
-        final Date date1 = bean.getLastModified();
+        assertNotNull(bean.getLastModifiedAt());
+        final Date date1 = bean.getLastModifiedAt();
 
         bean = abstractsStore.find(bean.getId());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
-        assertEquals(bean.getLastModified(), date1);
+        assertEquals(bean.getLastModifiedAt(), date1);
 
         Thread.sleep(100); // make sure last modified date changes
 
         bean = abstractsStore.store(bean);
-        assertNotEquals(bean.getLastModified(), date1);
-        final Date date2 = bean.getLastModified();
+        assertNotEquals(bean.getLastModifiedAt(), date1);
+        final Date date2 = bean.getLastModifiedAt();
 
         bean = abstractsStore.find(bean.getId());
-        assertEquals(bean.getLastModified(), date2);
+        assertEquals(bean.getLastModifiedAt(), date2);
     }
 
     public static abstract class AbstractBean extends AbstractDocument {
@@ -158,7 +158,7 @@ public class StoreTest extends AbstractTest {
 
         @LastModified
         @JsonProperty(value="_last_modified_at", required=true) // "force" property to be visible, should be ignored
-        public Date getLastModified() {
+        public Date getLastModifiedAt() {
             return lastModified;
         }
 

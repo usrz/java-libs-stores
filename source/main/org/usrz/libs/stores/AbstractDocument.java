@@ -16,11 +16,17 @@
 package org.usrz.libs.stores;
 
 import static java.lang.Integer.toHexString;
+import static org.usrz.libs.stores.annotations.Id.ID;
+import static org.usrz.libs.stores.annotations.LastModified.LAST_MODIFIED;
+
+import java.util.Date;
 
 import org.usrz.libs.stores.annotations.Id;
+import org.usrz.libs.stores.annotations.LastModified;
 import org.usrz.libs.utils.Check;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -30,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public abstract class AbstractDocument implements Document {
 
+    private Date lastModifiedAt;
     private final String id;
 
     @JsonCreator
@@ -38,9 +45,21 @@ public abstract class AbstractDocument implements Document {
     }
 
     @Override
-    @JsonProperty(Id.ID)
+    @Id @JsonProperty(ID)
     public final String getId() {
         return id;
+    }
+
+    /* ====================================================================== */
+
+    @JsonIgnore
+    public final Date lastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    @LastModified @JsonProperty(LAST_MODIFIED)
+    private final void setLastModifiedAt(Date lastModifiedAt) {
+        this.lastModifiedAt = lastModifiedAt;
     }
 
     /* ====================================================================== */

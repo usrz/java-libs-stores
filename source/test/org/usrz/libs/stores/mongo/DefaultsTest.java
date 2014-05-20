@@ -47,7 +47,7 @@ import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.mongodb.DB;
 
-public class StoreDefaultsTest extends AbstractTest {
+public class DefaultsTest extends AbstractTest {
 
     private static final String id = UUID.randomUUID().toString();
     private static final String collection = Strings.random(16);

@@ -15,7 +15,11 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
+import java.util.Date;
+
 import org.usrz.libs.stores.annotations.Id;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * The core interface defining a <em>storable</em> object.
@@ -26,5 +30,8 @@ public interface Document {
 
     @Id
     public String getId();
+
+    @JsonIgnore
+    public Date lastModifiedAt();
 
 }

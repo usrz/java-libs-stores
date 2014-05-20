@@ -28,7 +28,6 @@ import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.annotations.Id;
-import org.usrz.libs.stores.annotations.LastModified;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
@@ -80,30 +79,28 @@ public class LastModifiedTest extends AbstractTest {
         bean.setValue(value);
 
         assertEquals(bean.getValue(), value);
-        assertNull(bean.lastModified());
+        assertNull(bean.lastModifiedAt());
 
         bean = abstractsStore.store(bean);
-        assertNotNull(bean.lastModified());
-        final Date date1 = bean.lastModified();
+        assertNotNull(bean.lastModifiedAt());
+        final Date date1 = bean.lastModifiedAt();
 
         bean = abstractsStore.find(bean.getId());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
-        assertEquals(bean.lastModified(), date1);
+        assertEquals(bean.lastModifiedAt(), date1);
 
         Thread.sleep(100); // make sure last modified date changes
 
         bean = abstractsStore.store(bean);
-        assertNotEquals(bean.lastModified(), date1);
-        final Date date2 = bean.lastModified();
+        assertNotEquals(bean.lastModifiedAt(), date1);
+        final Date date2 = bean.lastModifiedAt();
 
         bean = abstractsStore.find(bean.getId());
-        assertEquals(bean.lastModified(), date2);
+        assertEquals(bean.lastModifiedAt(), date2);
     }
 
     public static abstract class AbstractBean extends AbstractDocument {
-
-        @LastModified private Date lastModified;
 
         @JsonCreator
         protected AbstractBean(@Id String id) {
@@ -113,10 +110,6 @@ public class LastModifiedTest extends AbstractTest {
         public abstract String getValue();
 
         public abstract void setValue(String value);
-
-        public Date lastModified() {
-            return lastModified;
-        }
 
     }
 
