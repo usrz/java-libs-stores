@@ -20,6 +20,7 @@ import static org.usrz.libs.stores.annotations.LastModified.LAST_MODIFIED;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Date;
 import java.util.function.Consumer;
 
@@ -54,23 +55,28 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     private final DBCollection collection;
     private final BSONObjectMapper mapper;
     private final Injector injector;
-    private final Class<D> type;
+    private final Type type;
+    private final Class<D> rawType;
     private final Consumer<Initializer> creator;
     private final boolean lastModified;
 
     public MongoStore(BSONObjectMapper mapper,
                       Injector injector,
                       DBCollection collection,
-                      Class<D> type) {
-        creator = Defaults.Finder.find(type, injector);
-        this.collection = collection;
-        this.injector = injector;
-        this.mapper = mapper;
-        this.type = type;
+                      Type type,
+                      Class<D> rawType) {
+        this.collection = notNull(collection, "Null collection");
+        this.injector = notNull(injector, "Null injector");
+        this.mapper = notNull(mapper, "Null mapper");
+        this.type = notNull(type, "Null type");
+        this.rawType = notNull(rawType, "Null raw type");
+
+        /* Figure out our defaults creator */
+        creator = Defaults.Finder.find(rawType, injector);
 
         /* Figure out possible indexes from the bean description */
         boolean lastModified = false;
-        final JavaType javaType = SimpleType.construct(type);
+        final JavaType javaType = SimpleType.construct(rawType);
         final SerializationConfig config = mapper.getSerializationConfig();
         final BeanDescription description = config.getClassIntrospector().forSerialization(config, javaType, null);
         for (BeanPropertyDefinition property: description.findProperties()) {
@@ -78,7 +84,8 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
             /* Check if we have some "_last_modified" property */
             if (property.getName().equals(LAST_MODIFIED)) {
                 if (property.couldSerialize())
-                    log.warn("Class %s defines accessor for \"%s\" property", type.getName(), LAST_MODIFIED);
+                    log.warn("Type %s defines accessor for \"%s\" property in class %s",
+                             type.getTypeName(), LAST_MODIFIED, rawType.getName());
                 lastModified |= property.couldDeserialize();
             }
             ensureIndex(property);
@@ -102,8 +109,13 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     }
 
     @Override
-    public Class<D> getType() {
+    public Type getDocumentType() {
         return type;
+    }
+
+    @Override
+    public Class<D> getDocumentClass() {
+        return rawType;
     }
 
     @Override
@@ -194,9 +206,9 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
             /* Map the constructed BSON to the object */
             final BasicDBObject bson = initializer.bson;
             if (!lastModified) bson.remove(LAST_MODIFIED);
-            return mapper.readValue(bson, type);
+            return mapper.readValue(bson, rawType);
         } catch (IOException exception) {
-            throw new MongoException("Exception mapping BSON to " + type.getName(), exception);
+            throw new MongoException("Exception mapping BSON to " + rawType.getName(), exception);
         }
     }
 

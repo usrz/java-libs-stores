@@ -17,6 +17,7 @@ package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
@@ -92,6 +93,17 @@ public class StoreTest extends AbstractTest {
         assertSame(stores.getStore(InterfaceBean.class), interfacesStore);
         assertSame(stores.getStore(abstractsCollection), abstractsStore);
         assertSame(stores.getStore(interfacesCollection), interfacesStore);
+
+        /* Check we get the proper types */
+        assertEquals(abstractsStore.getDocumentType(), AbstractBean.class);
+        assertEquals(interfacesStore.getDocumentType(), InterfaceBean.class);
+
+        /* Constructed beans name pattern */
+        final Pattern abstractsPattern = Pattern.compile(AbstractBean.class.getName().replaceAll("\\.", "\\\\.").replaceAll("\\$", "\\\\\\$") + "_[0-9A-Fa-f]+");
+        assertTrue(abstractsPattern.matcher(abstractsStore.getDocumentClass().getName()).matches(), "Class name \"" + abstractsStore.getDocumentClass().getName() + "\" not matching \"" + abstractsPattern.pattern() + "\"");
+        final Pattern interfacesPattern = Pattern.compile(AbstractDocument.class.getName().replaceAll("\\.", "\\\\.") + "_[0-9A-Fa-f]+");
+        assertTrue(interfacesPattern.matcher(interfacesStore.getDocumentClass().getName()).matches(), "Class name \"" + interfacesStore.getDocumentClass().getName() + "\" not matching \"" + interfacesPattern.pattern() + "\"");
+
     }
 
     /* ====================================================================== */

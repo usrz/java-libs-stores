@@ -17,6 +17,7 @@ package org.usrz.libs.stores;
 
 import static org.usrz.libs.utils.Check.notNull;
 
+import java.lang.reflect.Type;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.annotations.Defaults.Initializer;
@@ -40,8 +41,13 @@ public class AbstractStoreWrapper<D extends Document> implements Store<D> {
     }
 
     @Override
-    public Class<D> getType() {
-        return store.getType();
+    public Type getDocumentType() {
+        return store.getDocumentType();
+    }
+
+    @Override
+    public Class<D> getDocumentClass() {
+        return store.getDocumentClass();
     }
 
     @Override

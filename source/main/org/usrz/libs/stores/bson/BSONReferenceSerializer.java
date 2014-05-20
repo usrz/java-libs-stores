@@ -49,7 +49,7 @@ public class BSONReferenceSerializer<D extends Document> extends JsonSerializer<
 
     @Override
     public Class<D> handledType() {
-        return store.getType();
+        return store.getDocumentClass();
     }
 
 }

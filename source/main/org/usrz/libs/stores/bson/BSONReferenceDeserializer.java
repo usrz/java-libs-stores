@@ -65,7 +65,7 @@ public class BSONReferenceDeserializer<D extends Document> extends JsonDeseriali
 
     @Override
     public Class<D> handledType() {
-        return store.getType();
+        return store.getDocumentClass();
     }
 
 }

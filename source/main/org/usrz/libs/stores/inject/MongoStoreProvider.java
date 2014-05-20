@@ -62,7 +62,7 @@ implements Provider<Store<D>> {
         final Class<D> beanClass = Injections.getInstance(injector, Key.get(beanType));
 
         /* Create the basic store */
-        store = new MongoStore(mapper, injector, collection, beanClass);
+        store = new MongoStore(mapper, injector, collection, type.getType(), beanClass);
         log.info("Created Store<%s> in collection %s", type, collection.getName());
 
         /* Caches */

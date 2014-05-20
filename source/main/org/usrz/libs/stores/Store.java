@@ -15,12 +15,13 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.function.Consumer;
 
 import org.usrz.libs.stores.annotations.Defaults;
 import org.usrz.libs.stores.annotations.Defaults.Initializer;
 import org.usrz.libs.stores.annotations.Id;
-
 
 /**
  * A {@link Store} stores {@link Document} instances.
@@ -31,9 +32,18 @@ import org.usrz.libs.stores.annotations.Id;
 public interface Store<D extends Document> {
 
     /**
-     * Return the concrete {@link Class type} used by this {@link Store}.
+     * Return the {@link Type} stored by this instance.
+     * <p>
+     * This might not be the actual {@linkplain #getDocumentClass() document
+     * class}, as a definition for a {@link Store} might take an interface,
+     * and can be <em>{@linkplain ParameterizedType parameterized}.</em>.
      */
-    public Class<D> getType();
+    public Type getDocumentType();
+
+    /**
+     * Return the concrete {@linkplain Class class} used by this {@link Store}.
+     */
+    public Class<D> getDocumentClass();
 
     /**
      * Return the underlying collection name associated with the {@link Store}.
