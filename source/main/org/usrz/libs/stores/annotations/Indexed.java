@@ -57,4 +57,7 @@ public @interface Indexed {
     /** The options for the index to create. */
     public Option[] options() default {};
 
+    /** The duration for automatic expiration. */
+    public String expiresAfter() default "";
+
 }

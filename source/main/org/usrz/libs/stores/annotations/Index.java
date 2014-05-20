@@ -66,6 +66,9 @@ public @interface Index {
     /** The name of the index to create. */
     public String name() default "";
 
+    /** The duration for automatic expiration. */
+    public String expiresAfter() default "";
+
     /** The options for the index to create. */
     public Option[] options() default {};
 
