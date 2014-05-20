@@ -16,6 +16,7 @@
 package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
+import java.util.Date;
 
 import javax.inject.Inject;
 
@@ -29,12 +30,14 @@ import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.Stores;
 import org.usrz.libs.stores.annotations.Id;
+import org.usrz.libs.stores.annotations.LastModified;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.Strings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
@@ -103,26 +106,48 @@ public class StoreTest extends AbstractTest {
 
         assertNull(bean.getValue());
         bean.setValue(value);
+
         assertEquals(bean.getValue(), value);
+        assertNull(bean.getLastModified());
 
-        abstractsStore.store(bean);
+        bean = abstractsStore.store(bean);
+        assertNotNull(bean.getLastModified());
+        final Date date1 = bean.getLastModified();
 
-        AbstractBean bean2 = abstractsStore.find(bean.getId());
-        assertNotNull(bean2);
+        bean = abstractsStore.find(bean.getId());
+        assertNotNull(bean);
         assertEquals(bean.getValue(), value);
+        assertEquals(bean.getLastModified(), date1);
 
+        Thread.sleep(100); // make sure last modified date changes
+
+        bean = abstractsStore.store(bean);
+        assertNotEquals(bean.getLastModified(), date1);
+        final Date date2 = bean.getLastModified();
+
+        bean = abstractsStore.find(bean.getId());
+        assertEquals(bean.getLastModified(), date2);
     }
 
     public static abstract class AbstractBean extends AbstractDocument {
 
+        private final Date lastModified;
+
         @JsonCreator
-        protected AbstractBean(@Id String id) {
+        protected AbstractBean(@Id String id,
+                               @LastModified Date modified) {
             super(id);
+            lastModified = modified;
         }
 
         public abstract String getValue();
 
         public abstract void setValue(String value);
+
+        @JsonProperty("_last_modified_at") // "force" property to be visible, should be ignored
+        public Date getLastModified() {
+            return lastModified;
+        }
 
     }
 
@@ -139,20 +164,39 @@ public class StoreTest extends AbstractTest {
         assertNull(bean.getValue());
         bean.setValue(value);
         assertEquals(bean.getValue(), value);
+        assertNull(bean.getLastModified());
 
-        interfacesStore.store(bean);
+        bean = interfacesStore.store(bean);
+        assertNotNull(bean.getLastModified());
+        final Date date1 = bean.getLastModified();
 
-        InterfaceBean bean2 = interfacesStore.find(bean.getId());
-        assertNotNull(bean2);
+        bean = interfacesStore.find(bean.getId());
+        assertNotNull(bean);
         assertEquals(bean.getValue(), value);
+        assertEquals(bean.getLastModified(), date1);
+
+        Thread.sleep(100); // make sure last modified date changes
+
+        bean = interfacesStore.store(bean);
+        assertNotEquals(bean.getLastModified(), date1);
+        final Date date2 = bean.getLastModified();
+
+        bean = interfacesStore.find(bean.getId());
+        assertEquals(bean.getLastModified(), date2);
 
     }
 
     public static interface InterfaceBean extends Document {
 
-        public abstract String getValue();
+        public String getValue();
 
-        public abstract void setValue(String value);
+        public void setValue(String value);
+
+        @JsonProperty("_last_modified_at") // "force" property to be visible, should be ignored
+        public Date getLastModified();
+
+        @LastModified
+        public void setLastModified(Date date);
 
     }
 }

@@ -16,9 +16,11 @@
 package org.usrz.libs.stores.mongo;
 
 import static org.usrz.libs.stores.annotations.Id.ID;
+import static org.usrz.libs.stores.annotations.LastModified.LAST_MODIFIED;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.function.Consumer;
 
 import org.usrz.libs.logging.Log;
@@ -54,6 +56,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     private final Injector injector;
     private final Class<D> type;
     private final Consumer<Initializer> creator;
+    private final boolean lastModified;
 
     public MongoStore(BSONObjectMapper mapper,
                       Injector injector,
@@ -66,10 +69,23 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         this.type = type;
 
         /* Figure out possible indexes from the bean description */
+        boolean lastModified = false;
         final JavaType javaType = SimpleType.construct(type);
         final SerializationConfig config = mapper.getSerializationConfig();
         final BeanDescription description = config.getClassIntrospector().forSerialization(config, javaType, null);
-        for (BeanPropertyDefinition property: description.findProperties()) ensureIndex(property);
+        for (BeanPropertyDefinition property: description.findProperties()) {
+
+            /* Check if we have some "_last_modified" property */
+            if (property.getName().equals(LAST_MODIFIED)) {
+                if (property.couldSerialize())
+                    log.warn("Class %s defines accessor for \"%s\" property", type.getName(), LAST_MODIFIED);
+                lastModified |= property.couldDeserialize();
+            }
+            ensureIndex(property);
+        }
+
+        /* Remember if we can deserialize the "_last_modified_at" field */
+        this.lastModified = lastModified;
     }
 
     private void ensureIndex(BeanPropertyDefinition property) {
@@ -121,9 +137,10 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     public D store(D object) {
         try {
             final BasicDBObject bson = mapper.writeValueAsBson(object);
+            bson.put(LAST_MODIFIED, new Date());
             log.debug("Saving %s in collection \"%s\"", bson, collection);
             collection.save(bson);
-            return object;
+            return convert(bson);
         } catch (IOException exception) {
             throw new MongoException("Unable to map object to BSON", exception);
         }
@@ -176,6 +193,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
             /* Map the constructed BSON to the object */
             final BasicDBObject bson = initializer.bson;
+            if (!lastModified) bson.remove(LAST_MODIFIED);
             return mapper.readValue(bson, type);
         } catch (IOException exception) {
             throw new MongoException("Exception mapping BSON to " + type.getName(), exception);
