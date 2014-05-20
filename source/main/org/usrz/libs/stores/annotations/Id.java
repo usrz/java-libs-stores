@@ -28,6 +28,9 @@ import java.lang.annotation.Target;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
 
+import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * A simple annotation usable in constructors when implementing the
  * {@link Document} interface or extending {@link AbstractDocument}.
@@ -38,6 +41,9 @@ import org.usrz.libs.stores.Document;
 @Documented
 @Retention(RUNTIME)
 @Target({PARAMETER, FIELD, METHOD})
+
+@JacksonAnnotationsInside
+@JsonProperty(value = Id.ID, required = true)
 public @interface Id {
 
     /**

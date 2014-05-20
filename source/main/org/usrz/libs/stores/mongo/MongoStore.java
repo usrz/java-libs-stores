@@ -79,7 +79,11 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         final JavaType javaType = SimpleType.construct(rawType);
         final SerializationConfig config = mapper.getSerializationConfig();
         final BeanDescription description = config.getClassIntrospector().forSerialization(config, javaType, null);
+
+        log.debug("Type \"%s\" implemented by \"%s\"", type.getTypeName(), rawType.getName());
         for (BeanPropertyDefinition property: description.findProperties()) {
+            log.debug(" --> Property \"%s\": serializable: %b, de-seserializable: %b ",
+                      property.getName(), property.couldSerialize(), property.couldDeserialize());
 
             /* Check if we have some "_last_modified" property */
             if (property.getName().equals(LAST_MODIFIED)) {

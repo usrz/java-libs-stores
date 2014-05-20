@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.PropertyName;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.databind.introspect.Annotated;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.fasterxml.jackson.module.guice.GuiceAnnotationIntrospector;
@@ -106,6 +107,13 @@ public class BSONAnnotationIntrospector extends GuiceAnnotationIntrospector {
     @Override @Deprecated
     public String findDeserializationName(AnnotatedParameter a) {
         return propertyName(findNameForDeserialization(a));
+    }
+
+    @Override
+    public Boolean hasRequiredMarker(AnnotatedMember a) {
+        if (a.hasAnnotation(LastModified.class)) return true;
+        if (a.hasAnnotation(Id.class)) return true;
+        return null;
     }
 
     @Override

@@ -156,7 +156,8 @@ public class StoreTest extends AbstractTest {
 
         public abstract void setValue(String value);
 
-        @JsonProperty("_last_modified_at") // "force" property to be visible, should be ignored
+        @LastModified
+        @JsonProperty(value="_last_modified_at", required=true) // "force" property to be visible, should be ignored
         public Date getLastModified() {
             return lastModified;
         }
@@ -204,7 +205,8 @@ public class StoreTest extends AbstractTest {
 
         public void setValue(String value);
 
-        @JsonProperty("_last_modified_at") // "force" property to be visible, should be ignored
+        @LastModified
+        @JsonProperty(value="_last_modified_at", required=true) // "force" property to be visible, should be ignored
         public Date getLastModified();
 
         @LastModified
