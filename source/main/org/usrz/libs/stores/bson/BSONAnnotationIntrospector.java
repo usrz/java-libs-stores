@@ -55,7 +55,7 @@ public class BSONAnnotationIntrospector extends GuiceAnnotationIntrospector {
         try {
             stores = injector.getInstance(Stores.class);
         } catch (Exception exception) {
-            log.warn("Warning, Stores implementation not available, Document/Reference resolution will fail");
+            log.warn("Warning, Stores implementation not available, Document/Reference resolution will fail", exception);
         } finally {
             this.stores = stores;
         }
