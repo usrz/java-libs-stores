@@ -17,16 +17,20 @@ package org.usrz.libs.stores;
 
 import java.lang.reflect.Type;
 
+import org.usrz.libs.stores.inject.MongoGuiceStores;
+
+import com.google.inject.ImplementedBy;
 import com.google.inject.TypeLiteral;
 
+@ImplementedBy(MongoGuiceStores.class)
 public interface Stores {
 
-    public default <D extends Document> Store<D> getStore(Class<D> type) {
+    default <D extends Document> Store<D> getStore(Class<D> type) {
         return getStore(TypeLiteral.get(type));
     }
 
     @SuppressWarnings("unchecked")
-    public default Store<?> getStore(Type type) {
+    default Store<?> getStore(Type type) {
         return getStore((TypeLiteral<? extends Document>) TypeLiteral.get(type));
     }
 
