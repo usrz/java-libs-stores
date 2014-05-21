@@ -16,8 +16,10 @@
 package org.usrz.libs.stores.inject;
 
 import org.usrz.libs.configurations.ConfigurableProvider;
+import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.logging.Log;
 
+import com.google.inject.Injector;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 
@@ -31,7 +33,7 @@ public class MongoClientProvider extends ConfigurableProvider<MongoClient, Mongo
     }
 
     @Override
-    public MongoClient get() {
+    protected MongoClient get(Injector injector, Configurations configurations) {
         if (client != null) return client;
 
         final String host = configurations.get("host", "localhost");

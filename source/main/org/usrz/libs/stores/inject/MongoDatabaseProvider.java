@@ -16,8 +16,10 @@
 package org.usrz.libs.stores.inject;
 
 import org.usrz.libs.configurations.ConfigurableProvider;
+import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.utils.inject.Injections;
 
+import com.google.inject.Injector;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 
@@ -28,7 +30,7 @@ public class MongoDatabaseProvider extends ConfigurableProvider<DB, MongoDatabas
     }
 
     @Override
-    public DB get() {
+    protected DB get(Injector injector, Configurations configurations) {
         final MongoClient client = Injections.getInstance(injector, this.key(MongoClient.class));
         final String database = configurations.requireString("database");
         return client.getDB(database);
