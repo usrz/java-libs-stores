@@ -17,39 +17,29 @@ package org.usrz.libs.stores.inject;
 
 import static org.usrz.libs.utils.Check.notNull;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
-import org.usrz.libs.utils.Injections;
 import org.usrz.libs.utils.beans.BeanBuilder;
+import org.usrz.libs.utils.inject.InjectingProvider;
+import org.usrz.libs.utils.inject.Injections;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
 
-public class MongoBeanClassProvider<D extends Document> implements Provider<Class<D>> {
+public class MongoBeanClassProvider<D extends Document> extends InjectingProvider<Class<D>> {
 
     private final Key<BeanBuilder> key;
     private final Class<? super D> original;
 
     private Class<?> type;
     private final Set<Class<?>> interfaces = new HashSet<>();
-    private Class<D> bean;
 
     public MongoBeanClassProvider(Class<? super D> type) {
         this.key = Key.get(BeanBuilder.class);
-        setBeanDetails(type);
-        original = type;
-    }
-
-    public MongoBeanClassProvider(Class<? super D> type, Annotation annotation) {
-        this.key = Key.get(BeanBuilder.class, annotation);
         setBeanDetails(type);
         original = type;
     }
@@ -71,9 +61,9 @@ public class MongoBeanClassProvider<D extends Document> implements Provider<Clas
             this.interfaces.add(interfaceClass);
     }
 
-    @Inject
+    @Override
     @SuppressWarnings("unchecked")
-    public void setup(Injector injector) {
+    protected Class<D> get(Injector injector) {
         final BeanBuilder builder = Injections.getInstance(injector, key);
 
         /* Create the actual type (if needed) or just the one specified */
@@ -91,13 +81,7 @@ public class MongoBeanClassProvider<D extends Document> implements Provider<Clas
             throw new IllegalArgumentException("Constructed bean does not extendd Document class");
 
         /* Done */
-        this.bean = (Class<D>) bean;
-    }
-
-    @Override
-    public Class<D> get() {
-        if (bean == null) throw new IllegalStateException("Not constructed");
-        return bean;
+        return (Class<D>) bean;
     }
 
 }

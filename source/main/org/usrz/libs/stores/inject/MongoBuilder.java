@@ -17,25 +17,17 @@ package org.usrz.libs.stores.inject;
 
 import static org.usrz.libs.utils.Check.notNull;
 
-import java.lang.annotation.Annotation;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-
-import javax.inject.Inject;
 
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Relation;
-import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.Stores;
 import org.usrz.libs.stores.annotations.Collection;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
-import org.usrz.libs.utils.Injections;
-import org.usrz.libs.utils.beans.BeanBuilder;
+import org.usrz.libs.utils.beans.BeansModule;
 
 import com.google.inject.Binder;
-import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
@@ -46,22 +38,15 @@ import com.mongodb.MongoClient;
 
 public class MongoBuilder {
 
-    private final Annotation unique = Injections.unique();
-    private final MongoStores stores = new MongoStores();
     private final Binder binder;
 
     public MongoBuilder(Binder binder) {
-        this.binder = notNull(binder);
-        binder.skipSources(this.getClass());
+        this.binder = notNull(binder).skipSources(getClass());
 
-        /* Basic bindings, all uniquely annotated */
-        this.binder.bind(MongoClient.class).toProvider(new MongoClientProvider().with(unique)).asEagerSingleton();
-        this.binder.bind(DB.class).toProvider(new MongoDatabaseProvider().with(unique)).asEagerSingleton();
-
-        /* Shared instances across all stores */
-        this.binder.bind(BSONObjectMapper.class).annotatedWith(unique).to(BSONObjectMapper.class);
-        this.binder.bind(BeanBuilder.class).annotatedWith(unique).toInstance(new BeanBuilder());
-        this.binder.bind(Stores.class).toInstance(stores);
+        /* Shared instances across all stores (not skipping this source) */
+        binder.bind(Stores.class).to(MongoGuiceStores.class).asEagerSingleton();
+        binder.bind(BSONObjectMapper.class).asEagerSingleton();
+        binder.install(BeansModule.BEANS_MODULE);
     }
 
     /* ====================================================================== */
@@ -79,8 +64,8 @@ public class MongoBuilder {
     /* ====================================================================== */
 
     public void configure(Configurations configurations) {
-        /* Bind our configurations */
-        binder.bind(Configurations.class).annotatedWith(unique).toInstance(configurations);
+        binder.bind(MongoClient.class).toProvider(new MongoClientProvider().with(configurations)).asEagerSingleton();
+        binder.bind(DB.class).toProvider(new MongoDatabaseProvider().with(configurations)).asEagerSingleton();
     }
 
     /* ====================================================================== */
@@ -100,8 +85,7 @@ public class MongoBuilder {
     }
 
     public <D extends Document> MongoStoreBuilder<D> store(TypeLiteral<D> type, String collection) {
-        stores.add(type, collection);
-        return new MongoStoreBuilder<D>(binder, unique, type, collection);
+        return new MongoStoreBuilder<D>(binder, type, collection);
     }
 
     /* ---------------------------------------------------------------------- */
@@ -131,7 +115,7 @@ public class MongoBuilder {
     public <L extends Document, R extends Document> void relate(TypeLiteral<L> left, TypeLiteral<R> right, String collection) {
 
         /* Start creating and binding our collection (annotated by collection name) */
-        MongoCollectionProvider provider = new MongoCollectionProvider(collection, unique);
+        MongoCollectionProvider provider = new MongoCollectionProvider(collection);
         binder.bind(DBCollection.class)
               .annotatedWith(Names.named(collection))
               .toProvider(provider);
@@ -141,48 +125,5 @@ public class MongoBuilder {
         final TypeLiteral<Relation<L, R>> type = (TypeLiteral<Relation<L, R>>)
                 TypeLiteral.get(Types.newParameterizedType(Relation.class, left.getType(), right.getType()));
         binder.bind(type).toProvider(new MongoRelationProvider<L, R>(left, right, collection));
-    }
-
-    /* ====================================================================== */
-
-    private final class MongoStores implements Stores {
-
-        private final ConcurrentHashMap<String, TypeLiteral<Store<?>>> byCollection = new ConcurrentHashMap<>();
-        private final ConcurrentHashMap<TypeLiteral<?>, TypeLiteral<Store<?>>> byType = new ConcurrentHashMap<>();
-
-        private final ConcurrentHashMap<String, Store<?>> cacheByCollection = new ConcurrentHashMap<>();
-        private final ConcurrentHashMap<TypeLiteral<?>, Store<?>> cacheByType = new ConcurrentHashMap<>();
-
-        @Inject Injector injector;
-
-        private <D extends Document> void add(TypeLiteral<D> type, String collection) {
-            @SuppressWarnings("unchecked")
-            final TypeLiteral<Store<?>> storeType = (TypeLiteral<Store<?>>) TypeLiteral.get(Types.newParameterizedType(Store.class, type.getType()));
-            if (byCollection.putIfAbsent(collection, storeType) != null)
-                throw new IllegalArgumentException("Multiple types associated with collection \"" + collection + "\"");
-            byType.put(type, storeType);
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public <D extends Document> Store<D> getStore(final TypeLiteral<D> type) {
-            if (injector == null) throw new IllegalStateException("No injector available");
-            return (Store<D>) cacheByType.computeIfAbsent(type, (literal) -> {
-                final TypeLiteral<Store<?>> storeLiteral = byType.get(literal);
-                if (storeLiteral == null) throw new IllegalStateException("Type " + literal + " not mapped to a store");
-                return injector.getInstance(Key.get(storeLiteral));
-            });
-        }
-
-        @Override
-        public Store<?> getStore(String collection) {
-            if (injector == null) throw new IllegalStateException("No injector available");
-            return cacheByCollection.computeIfAbsent(collection, (name) -> {
-                final TypeLiteral<Store<?>> storeLiteral = byCollection.get(name);
-                if (storeLiteral == null) throw new IllegalStateException("Collection " + name + " not mapped to a store");
-                return injector.getInstance(Key.get(storeLiteral));
-            });
-        }
-
     }
 }

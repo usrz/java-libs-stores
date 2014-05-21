@@ -17,37 +17,27 @@ package org.usrz.libs.stores.inject;
 
 import static org.usrz.libs.utils.Check.notEmpty;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-
 import org.usrz.libs.stores.mongo.MongoIndex;
-import org.usrz.libs.utils.Injections;
+import org.usrz.libs.utils.inject.InjectingProvider;
+import org.usrz.libs.utils.inject.Injections;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 
-public class MongoCollectionProvider implements Provider<DBCollection> {
+public class MongoCollectionProvider extends InjectingProvider<DBCollection> {
 
     private final List<MongoIndex> indexes = new ArrayList<>();
     private final Key<DB> database;
     private final String name;
 
-    private DBCollection collection;
-
     public MongoCollectionProvider(String collection) {
         name = notEmpty(collection, "Empty collection");
         database = Key.get(DB.class);
-    }
-
-    public MongoCollectionProvider(String collection, Annotation database) {
-        name = notEmpty(collection, "Empty collection");
-        this.database = Key.get(DB.class, database);
     }
 
     public MongoIndexBuilder requireIndex() {
@@ -56,8 +46,8 @@ public class MongoCollectionProvider implements Provider<DBCollection> {
         return index;
     }
 
-    @Inject
-    private void setup(Injector injector) {
+    @Override
+    protected DBCollection get(Injector injector) {
         final DB database = Injections.getInstance(injector, this.database);
         final DBCollection collection = database.getCollection(name);
 
@@ -65,12 +55,6 @@ public class MongoCollectionProvider implements Provider<DBCollection> {
         for (MongoIndex index: indexes) index.ensureIndex(collection);
 
         /* Done */
-        this.collection = collection;
-    }
-
-    @Override
-    public DBCollection get() {
-        if (collection == null) throw new IllegalStateException("Not constructed");
         return collection;
     }
 

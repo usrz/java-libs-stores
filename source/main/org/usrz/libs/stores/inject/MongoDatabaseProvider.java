@@ -16,7 +16,7 @@
 package org.usrz.libs.stores.inject;
 
 import org.usrz.libs.configurations.ConfigurableProvider;
-import org.usrz.libs.utils.Injections;
+import org.usrz.libs.utils.inject.Injections;
 
 import com.mongodb.DB;
 import com.mongodb.MongoClient;

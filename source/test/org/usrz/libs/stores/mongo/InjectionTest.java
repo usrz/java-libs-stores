@@ -28,7 +28,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
-import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.annotations.Id;
@@ -39,8 +38,8 @@ import org.usrz.libs.utils.Strings;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.google.inject.Binder;
 import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.mongodb.DB;
 
@@ -53,7 +52,6 @@ public class InjectionTest extends AbstractTest {
     private static final Set<Object> SET = Collections.emptySet();
 
     private static final String collection = Strings.random(16);
-    private static final Log log = new Log();
 
     @Inject private Store<MyBean> store;
     @Inject private DB db;
@@ -63,16 +61,20 @@ public class InjectionTest extends AbstractTest {
     throws Exception {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(MongoBuilder.apply((builder) -> {
+        final Injector injector = Guice.createInjector(
+                MongoBuilder.apply((builder) -> builder.configure(configurations.strip("mongo"))),
+                MongoBuilder.apply((builder) -> builder.store(MyBean.class, collection)),
+                (binder) -> {
+                    binder.bind(new TypeLiteral<Map<Object, Object>>(){}).toInstance(MAP);
+                    binder.bind(new TypeLiteral<List<Object>>(){}).toInstance(LIST);
+                    binder.bind(new TypeLiteral<Set<Object>>(){}).toInstance(SET);
+                });
 
-            Binder binder = builder.binder();
-            binder.bind(new TypeLiteral<Map<Object, Object>>(){}).toInstance(MAP);
-            binder.bind(new TypeLiteral<List<Object>>(){}).toInstance(LIST);
-            binder.bind(new TypeLiteral<Set<Object>>(){}).toInstance(SET);
+        injector.getAllBindings().entrySet().forEach((entry) -> {
+            log.info("Binding for key \"%s\"", entry.getKey());
+        });
 
-            builder.configure(configurations.strip("mongo"));
-            builder.store(MyBean.class, collection);
-        })).injectMembers(this);
+        injector.injectMembers(this);
     }
 
     @AfterClass(alwaysRun=true)

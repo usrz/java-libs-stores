@@ -20,15 +20,13 @@ import static org.usrz.libs.utils.Check.notNull;
 
 import java.lang.reflect.ParameterizedType;
 
-import javax.inject.Inject;
-import javax.inject.Provider;
-
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Relation;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.mongo.MongoRelation;
-import org.usrz.libs.utils.Injections;
+import org.usrz.libs.utils.inject.InjectingProvider;
+import org.usrz.libs.utils.inject.Injections;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -38,7 +36,7 @@ import com.google.inject.util.Types;
 import com.mongodb.DBCollection;
 
 public class MongoRelationProvider<L extends Document, R extends Document>
-implements Provider<Relation<L, R>> {
+extends InjectingProvider<Relation<L, R>> {
 
     private static final Log log = new Log();
 
@@ -46,17 +44,15 @@ implements Provider<Relation<L, R>> {
     private final TypeLiteral<R> typeR;
     private final String collection;
 
-    private Relation<L, R> relation;
-
     protected MongoRelationProvider(TypeLiteral<L> typeL, TypeLiteral<R> typeR, String collection) {
         this.typeL = notNull(typeL, "Null type for left association");
         this.typeR = notNull(typeR, "Null type for right association");
         this.collection = notEmpty(collection, "Invalid collection name");
     }
 
-    @Inject
+    @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void setup(Injector injector) {
+    protected Relation<L, R> get(Injector injector) {
         final DBCollection collection = Injections.getInstance(injector, DBCollection.class, Names.named(this.collection));
 
         final ParameterizedType storeTypeL = Types.newParameterizedType(Store.class, typeL.getType());
@@ -69,14 +65,8 @@ implements Provider<Relation<L, R>> {
         final Store<R> storeR = injector.getInstance(Key.get(literalR));
 
         /* Create our relation */
-        this.relation = new MongoRelation(collection, storeL, storeR);
-        log.info("Created Relation<%s, %s> in collection %s", typeL, typeR, collection.getName());
-    }
-
-    @Override
-    public Relation<L, R> get() {
-        if (relation == null) throw new IllegalStateException("Not available");
-        return relation;
+        log.info("Createding Relation<%s, %s> in collection %s", typeL, typeR, collection.getName());
+        return new MongoRelation(collection, storeL, storeR);
     }
 
 }

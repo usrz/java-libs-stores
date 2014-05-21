@@ -17,7 +17,6 @@ package org.usrz.libs.stores.inject;
 
 import static org.usrz.libs.utils.Check.notNull;
 
-import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,7 +35,6 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Types;
 import com.mongodb.DBCollection;
 
-
 public class MongoStoreBuilder<D extends Document> {
 
     private final MongoCollectionProvider collection;
@@ -44,13 +42,12 @@ public class MongoStoreBuilder<D extends Document> {
     private final TypeLiteral<D> type;
     private final Binder binder;
 
-    protected MongoStoreBuilder(Binder binder, Annotation unique, TypeLiteral<D> type, String collection) {
+    protected MongoStoreBuilder(Binder binder, TypeLiteral<D> type, String collection) {
         this.type = notNull(type, "Null type literal");
-        this.binder = notNull(binder, "Null binder");
-        binder.skipSources(this.getClass());
+        this.binder = notNull(binder, "Null binder").skipSources(getClass());
 
         /* Start creating and binding our collection (annotated by collection name) */
-        this.collection = new MongoCollectionProvider(collection, unique);
+        this.collection = new MongoCollectionProvider(collection);
         binder.bind(DBCollection.class)
               .annotatedWith(Names.named(collection))
               .toProvider(this.collection);
@@ -58,13 +55,13 @@ public class MongoStoreBuilder<D extends Document> {
         /* Create our bean Class<D> provider */
         @SuppressWarnings("unchecked")
         final TypeLiteral<Class<D>> beanType = (TypeLiteral<Class<D>>) TypeLiteral.get(Types.newParameterizedType(Class.class, type.getType()));
-        this.bean = new MongoBeanClassProvider<D>(type.getRawType(), unique);
+        this.bean = new MongoBeanClassProvider<D>(type.getRawType());
         binder.bind(beanType).toProvider(this.bean);
 
         /* Finally bind our Store<D> provider */
         @SuppressWarnings("unchecked")
         final TypeLiteral<Store<D>> storeType = (TypeLiteral<Store<D>>) TypeLiteral.get(Types.newParameterizedType(Store.class, type.getType()));
-        binder.bind(storeType).toProvider(new MongoStoreProvider<D>(unique, type, collection));
+        binder.bind(storeType).toProvider(new MongoStoreProvider<D>(type, collection));
 
         /* Process @Index annotations */
         processIndexAnnotations(discoverIndexAnnotations(type.getRawType()));

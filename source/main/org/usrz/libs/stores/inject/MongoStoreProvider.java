@@ -15,19 +15,15 @@
  * ========================================================================== */
 package org.usrz.libs.stores.inject;
 
-import java.lang.annotation.Annotation;
-
-import javax.inject.Inject;
-import javax.inject.Provider;
-
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.CachingStore;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.stores.mongo.MongoStore;
-import org.usrz.libs.utils.Injections;
 import org.usrz.libs.utils.caches.Cache;
+import org.usrz.libs.utils.inject.InjectingProvider;
+import org.usrz.libs.utils.inject.Injections;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -37,24 +33,21 @@ import com.google.inject.util.Types;
 import com.mongodb.DBCollection;
 
 public class MongoStoreProvider<D extends Document>
-implements Provider<Store<D>> {
+extends InjectingProvider<Store<D>> {
 
     private final Log log = new Log();
-    private final Annotation annotation;
     private final TypeLiteral<D> type;
     private final String collection;
-    private Store<D> store;
 
-    public MongoStoreProvider(Annotation annotation, TypeLiteral<D> type, String collection) {
-        this.annotation = annotation;
+    public MongoStoreProvider(TypeLiteral<D> type, String collection) {
         this.collection = collection;
         this.type = type;;
     }
 
-    @Inject
+    @Override
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void setup(Injector injector) {
-        final BSONObjectMapper mapper = Injections.getInstance(injector, BSONObjectMapper.class, annotation);
+    protected Store<D> get(Injector injector) {
+        final BSONObjectMapper mapper = injector.getInstance(BSONObjectMapper.class);
         final DBCollection collection = Injections.getInstance(injector, DBCollection.class, Names.named(this.collection));
 
         /* Bean class */
@@ -62,7 +55,7 @@ implements Provider<Store<D>> {
         final Class<D> beanClass = Injections.getInstance(injector, Key.get(beanType));
 
         /* Create the basic store */
-        store = new MongoStore(mapper, injector, collection, type.getType(), beanClass);
+        Store store = new MongoStore(mapper, injector, collection, type.getType(), beanClass);
         log.info("Created Store<%s> in collection %s", type, collection.getName());
 
         /* Caches */
@@ -72,11 +65,7 @@ implements Provider<Store<D>> {
             store = new CachingStore<D>(store, cache);
             log.info("Enabling cache on Store<%s> with cache %s", type, cache);
         }
-    }
 
-    @Override
-    public Store<D> get() {
-        if (store == null) throw new IllegalStateException("Not available");
         return store;
     }
 
