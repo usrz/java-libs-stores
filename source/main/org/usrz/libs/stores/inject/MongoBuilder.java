@@ -44,8 +44,8 @@ public class MongoBuilder {
         this.binder = notNull(binder).skipSources(getClass());
 
         /* Shared instances across all stores (not skipping this source) */
-        binder.bind(Stores.class).to(MongoGuiceStores.class).asEagerSingleton();
         binder.bind(BSONObjectMapper.class).asEagerSingleton();
+        binder.bind(Stores.class).asEagerSingleton();
         binder.install(BeansModule.BEANS_MODULE);
     }
 
