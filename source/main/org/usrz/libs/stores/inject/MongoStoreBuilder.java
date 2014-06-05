@@ -35,14 +35,16 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Types;
 import com.mongodb.DBCollection;
 
-public class MongoStoreBuilder<D extends Document> {
+public class MongoStoreBuilder<D extends Document>
+implements MongoBindingBuilder {
 
+    private final MongoBuilder builder;
     private final MongoCollectionProvider collection;
-    private final MongoBeanClassProvider<D> bean;
     private final TypeLiteral<D> type;
     private final Binder binder;
 
-    protected MongoStoreBuilder(Binder binder, TypeLiteral<D> type, String collection) {
+    protected MongoStoreBuilder(MongoBuilder builder, Binder binder, TypeLiteral<D> type, String collection) {
+        this.builder = notNull(builder, "Null builder");
         this.type = notNull(type, "Null type literal");
         this.binder = notNull(binder, "Null binder").skipSources(getClass());
 
@@ -52,13 +54,7 @@ public class MongoStoreBuilder<D extends Document> {
               .annotatedWith(Names.named(collection))
               .toProvider(this.collection);
 
-        /* Create our bean Class<D> provider */
-        @SuppressWarnings("unchecked")
-        final TypeLiteral<Class<D>> beanType = (TypeLiteral<Class<D>>) TypeLiteral.get(Types.newParameterizedType(Class.class, type.getType()));
-        this.bean = new MongoBeanClassProvider<D>(type.getRawType());
-        binder.bind(beanType).toProvider(this.bean);
-
-        /* Finally bind our Store<D> provider */
+        /* Bind our Store<D> provider */
         @SuppressWarnings("unchecked")
         final TypeLiteral<Store<D>> storeType = (TypeLiteral<Store<D>>) TypeLiteral.get(Types.newParameterizedType(Store.class, type.getType()));
         binder.bind(storeType).toProvider(new MongoStoreProvider<D>(type, collection));
@@ -100,17 +96,29 @@ public class MongoStoreBuilder<D extends Document> {
         return this;
     }
 
-    public MongoStoreBuilder<D> withBeanDetails(Class<?> type, Class<?>... interfaces) {
-        this.bean.setBeanDetails(type, interfaces);
-        return this;
-    }
-
     public MongoStoreBuilder<D> withCache(Cache<String, D> cache) {
         @SuppressWarnings("unchecked")
         final TypeLiteral<Cache<String, D>> cacheType = (TypeLiteral<Cache<String, D>>)
                 TypeLiteral.get(Types.newParameterizedType(Cache.class, String.class, type.getType()));
         binder.bind(cacheType).toInstance(cache);
         return this;
+    }
+
+    /* ====================================================================== */
+
+    @Override
+    public <X extends Document> MongoStoreBuilder<X> store(TypeLiteral<X> type, String collection) {
+        return builder.store(type, collection);
+    }
+
+    @Override
+    public <X extends Document> MongoBuilder store(TypeLiteral<X> type, String collection, Consumer<MongoStoreBuilder<X>> consumer) {
+        return builder.store(type, collection, consumer);
+    }
+
+    @Override
+    public <L extends Document, R extends Document> MongoBuilder relate(TypeLiteral<L> left, TypeLiteral<R> right, String collection) {
+        return builder.relate(left, right, collection);
     }
 
 }

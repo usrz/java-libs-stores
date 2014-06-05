@@ -15,32 +15,64 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
-import java.util.Date;
+import static java.lang.Integer.toHexString;
 
-import org.usrz.libs.stores.annotations.Id;
+import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * The core interface defining a <em>storable</em> object.
+ * An abstract implementation of the {@link Document} interface.
  *
  * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
  */
-public interface Document {
+public abstract class Document {
 
-    /**
-     * Return the unique identifier of this {@link Document}.
-     *
-     * @return A <b>non-null</b> {@link String}.
-     */
-    @Id
-    public String id();
-
-    /**
-     * Return when this {@link Document} was last
-     * {@linkplain Store#store(Document) stored} or <b>null</b>.
-     */
     @JsonIgnore
-    public Date lastModifiedAt();
+    private final String id;
+    @JsonIgnore
+    private final Date lastModifiedAt;
 
+    protected Document() {
+        id = null;
+        lastModifiedAt = null;
+    }
+
+    @JsonIgnore
+    public final String id() {
+        return id;
+    }
+
+    @JsonIgnore
+    public final Date lastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    /* ====================================================================== */
+
+    @Override
+    public String toString() {
+        final String detail = id == null ? "-never-stored-" : id;
+        return getClass().getName() + "[" + detail + "]@" + toHexString(hashCode());
+    }
+
+    @Override
+    public int hashCode() {
+        if (id == null) return 31 * getClass().hashCode();
+        else return (31 * getClass().hashCode()) ^ id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object == null) return false;
+        if (object == this) return true;
+        try {
+            final Document document = (Document) object;
+            return document.getClass().equals(getClass())
+                && document.id == null ? id == null : document.id.equals(id)
+                && document.lastModifiedAt == null ? lastModifiedAt == null : document.lastModifiedAt.equals(lastModifiedAt);
+        } catch (Exception exception) {
+            return false;
+        }
+    }
 }

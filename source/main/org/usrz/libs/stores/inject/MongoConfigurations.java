@@ -13,43 +13,18 @@
  * See the License for the specific language governing permissions and        *
  * limitations under the License.                                             *
  * ========================================================================== */
-package org.usrz.libs.stores.annotations;
+package org.usrz.libs.stores.inject;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
 
-import org.usrz.libs.stores.AbstractDocument;
-import org.usrz.libs.stores.Document;
+import javax.inject.Qualifier;
 
-import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-/**
- * A simple annotation usable in constructors when implementing the
- * {@link Document} interface or extending {@link AbstractDocument}.
- *
- * @author <a href="mailto:pier@usrz.com">Pier Fumagalli</a>
- */
-@Inherited
-@Documented
+@Qualifier
 @Retention(RUNTIME)
-@Target({PARAMETER, FIELD, METHOD})
+public @interface MongoConfigurations {
 
-@JacksonAnnotationsInside
-@JsonProperty(value = Id.ID, required = true)
-public @interface Id {
-
-    /**
-     * The BSON field name for a {@link Document}
-     * <em>{@linkplain Document#id() identifier}</em>.
-     */
-    public static final String ID = "_id";
+    /* Empty annotation */
 
 }

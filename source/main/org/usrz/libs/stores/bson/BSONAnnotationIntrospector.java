@@ -15,9 +15,6 @@
  * ========================================================================== */
 package org.usrz.libs.stores.bson;
 
-import static org.usrz.libs.stores.annotations.Id.ID;
-import static org.usrz.libs.stores.annotations.LastModified.LAST_MODIFIED;
-
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,22 +23,18 @@ import javax.inject.Singleton;
 
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Stores;
-import org.usrz.libs.stores.annotations.Id;
-import org.usrz.libs.stores.annotations.LastModified;
 import org.usrz.libs.stores.annotations.Reference;
 
-import com.fasterxml.jackson.databind.PropertyName;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.databind.introspect.Annotated;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
-import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
-import com.fasterxml.jackson.module.guice.GuiceAnnotationIntrospector;
+import com.fasterxml.jackson.databind.introspect.NopAnnotationIntrospector;
 import com.google.inject.Injector;
 
 @Singleton
-public class BSONAnnotationIntrospector extends GuiceAnnotationIntrospector {
+public class BSONAnnotationIntrospector extends NopAnnotationIntrospector {
 
     private static final Log log = new Log();
 
@@ -50,7 +43,7 @@ public class BSONAnnotationIntrospector extends GuiceAnnotationIntrospector {
     private final ConcurrentHashMap<Type, BSONReferenceDeserializer<?>> deserializers = new ConcurrentHashMap<>();
 
     @Inject
-    public BSONAnnotationIntrospector(Injector injector) {
+    private BSONAnnotationIntrospector(Injector injector) {
         Stores stores = null;
         try {
             stores = injector.getInstance(Stores.class);
@@ -59,61 +52,6 @@ public class BSONAnnotationIntrospector extends GuiceAnnotationIntrospector {
         } finally {
             this.stores = stores;
         }
-    }
-
-    private String propertyName(PropertyName name) {
-        return name == null ? null : name.getSimpleName();
-    }
-
-    @Override
-    public PropertyName findNameForSerialization(Annotated a) {
-        /* We never process the "LastModified" annotation for serialization */
-        return a.hasAnnotation(Id.class) ? new PropertyName(ID) : null;
-    }
-
-    @Override @Deprecated
-    public String findSerializationName(AnnotatedField a) {
-        return propertyName(findNameForSerialization(a));
-    }
-
-    @Override @Deprecated
-    public String findSerializationName(AnnotatedMethod a) {
-        return propertyName(findNameForSerialization(a));
-    }
-
-    @Override
-    public PropertyName findNameForDeserialization(Annotated a) {
-        if (a.hasAnnotation(Id.class)) {
-            if (a.hasAnnotation(LastModified.class))
-                throw new RuntimeJsonMappingException("Both @Id and @LastModified specified on " + a);
-            return new PropertyName(ID);
-        } else if (a.hasAnnotation(LastModified.class)) {
-            return new PropertyName(LAST_MODIFIED);
-        } else {
-            return null;
-        }
-    }
-
-    @Override @Deprecated
-    public String findDeserializationName(AnnotatedMethod a) {
-        return propertyName(findNameForDeserialization(a));
-    }
-
-    @Override @Deprecated
-    public String findDeserializationName(AnnotatedField a) {
-        return propertyName(findNameForDeserialization(a));
-    }
-
-    @Override @Deprecated
-    public String findDeserializationName(AnnotatedParameter a) {
-        return propertyName(findNameForDeserialization(a));
-    }
-
-    @Override
-    public Boolean hasRequiredMarker(AnnotatedMember a) {
-        if (a.hasAnnotation(LastModified.class)) return true;
-        if (a.hasAnnotation(Id.class)) return true;
-        return null;
     }
 
     @Override

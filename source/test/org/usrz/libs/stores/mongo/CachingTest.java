@@ -17,6 +17,9 @@ package org.usrz.libs.stores.mongo;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -50,11 +53,12 @@ public class CachingTest extends AbstractTest {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
         final Cache<String, MyBean> cache = new SimpleCache<>();
 
-        Guice.createInjector(MongoBuilder.apply((builder) -> {
-            builder.configure(configurations.strip("mongo"));
-            builder.store(MyBean.class, collection)
-                   .withCache(cache);
-        })).injectMembers(this);
+        Guice.createInjector((binder) ->
+                new MongoBuilder(binder)
+                        .configure(configurations.strip("mongo"))
+                        .store(MyBean.class, collection)
+                        .withCache(cache)
+            ).injectMembers(this);
     }
 
     @AfterClass(alwaysRun=true)
@@ -71,11 +75,8 @@ public class CachingTest extends AbstractTest {
     throws Exception {
         assertNotNull(store, "Null store");
 
-        final MyBean bean = store.create();
-        assertNotNull(bean, "Null bean created");
-        assertNull(cache.fetch(bean.id()), "Cached on creation");
+        final MyBean bean = store.store(new MyBean());
 
-        store.store(bean);
         assertNotNull(cache.fetch(bean.id()), "Not cached on store");
 
         cache.invalidate(bean.id());
@@ -87,5 +88,11 @@ public class CachingTest extends AbstractTest {
 
     }
 
-    public interface MyBean extends Document {}
+    public static class MyBean extends Document {
+
+        @Getter @Setter
+        private String foo;
+
+    }
+
 }

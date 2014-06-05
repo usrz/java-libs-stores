@@ -25,6 +25,7 @@
     <dependency org="com.fasterxml" name="jackson-guice" rev="latest.release" conf="default"/>
     <dependency org="org.mongodb" name="driver" rev="latest.release" conf="default"/>
 
+    <dependency org="org.projectlombok" name="lombok" rev="latest.release" conf="testing-&gt;default"/>
     <dependency org="org.usrz.libs" name="testing" rev="latest.release" conf="testing-&gt;logging"/>
   </dependencies>
 

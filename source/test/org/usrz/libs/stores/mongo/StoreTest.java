@@ -17,21 +17,20 @@ package org.usrz.libs.stores.mongo;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.regex.Pattern;
 
 import javax.inject.Inject;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
-import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.Stores;
-import org.usrz.libs.stores.annotations.Id;
-import org.usrz.libs.stores.annotations.LastModified;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
@@ -44,28 +43,29 @@ import com.mongodb.DB;
 
 public class StoreTest extends AbstractTest {
 
-    private final String abstractsCollection = Strings.random(16);
-    private final String interfacesCollection = Strings.random(16);
+    private final String normalBeanCollection = Strings.random(16);
+    private final String lombokBeanCollection = Strings.random(16);
 
     @BeforeClass
     public void prepare()
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(MongoBuilder.apply((builder) -> {
-                builder.configure(configurations.strip("mongo"));
-                builder.store(AbstractBean.class, abstractsCollection);
-                builder.store(InterfaceBean.class, interfacesCollection);
-        })).injectMembers(this);
+        Guice.createInjector((binder) ->
+                new MongoBuilder(binder)
+                        .configure(configurations.strip("mongo"))
+                        .store(NormalBean.class, normalBeanCollection)
+                        .store(LombokBean.class, lombokBeanCollection)
+            ).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)
     public void cleanup()
     throws IOException {
         if (db != null) try {
-            db.getCollection(abstractsCollection).drop();
+            db.getCollection(normalBeanCollection).drop();
         } finally {
-            db.getCollection(interfacesCollection).drop();
+            db.getCollection(lombokBeanCollection).drop();
         }
     }
 
@@ -74,9 +74,9 @@ public class StoreTest extends AbstractTest {
     @Inject
     private Stores stores;
     @Inject
-    private Store<AbstractBean> abstractsStore;
+    private Store<NormalBean> normalBeanStore;
     @Inject
-    private Store<InterfaceBean> interfacesStore;
+    private Store<LombokBean> lombokBeanStore;
     @Inject
     private DB db;
 
@@ -84,82 +84,69 @@ public class StoreTest extends AbstractTest {
 
     @Test(priority=-1)
     public void testStores() {
-        assertNotNull(stores.getStore(AbstractBean.class));
-        assertNotNull(stores.getStore(InterfaceBean.class));
-        assertNotNull(stores.getStore(abstractsCollection));
-        assertNotNull(stores.getStore(interfacesCollection));
+        assertNotNull(stores.getStore(NormalBean.class));
+        assertNotNull(stores.getStore(LombokBean.class));
+        assertNotNull(stores.getStore(normalBeanCollection));
+        assertNotNull(stores.getStore(lombokBeanCollection));
 
-        assertSame(stores.getStore(AbstractBean.class), abstractsStore);
-        assertSame(stores.getStore(InterfaceBean.class), interfacesStore);
-        assertSame(stores.getStore(abstractsCollection), abstractsStore);
-        assertSame(stores.getStore(interfacesCollection), interfacesStore);
+        assertSame(stores.getStore(NormalBean.class), normalBeanStore);
+        assertSame(stores.getStore(LombokBean.class), lombokBeanStore);
+        assertSame(stores.getStore(normalBeanCollection), normalBeanStore);
+        assertSame(stores.getStore(lombokBeanCollection), lombokBeanStore);
 
         /* Check we get the proper types */
-        assertEquals(abstractsStore.getDocumentType(), AbstractBean.class);
-        assertEquals(interfacesStore.getDocumentType(), InterfaceBean.class);
-
-        /* Constructed beans name pattern */
-        final Pattern abstractsPattern = Pattern.compile(AbstractBean.class.getName().replaceAll("\\.", "\\\\.").replaceAll("\\$", "\\\\\\$") + "_[0-9A-Fa-f]+");
-        assertTrue(abstractsPattern.matcher(abstractsStore.getDocumentClass().getName()).matches(), "Class name \"" + abstractsStore.getDocumentClass().getName() + "\" not matching \"" + abstractsPattern.pattern() + "\"");
-        final Pattern interfacesPattern = Pattern.compile(AbstractDocument.class.getName().replaceAll("\\.", "\\\\.") + "_[0-9A-Fa-f]+");
-        assertTrue(interfacesPattern.matcher(interfacesStore.getDocumentClass().getName()).matches(), "Class name \"" + interfacesStore.getDocumentClass().getName() + "\" not matching \"" + interfacesPattern.pattern() + "\"");
+        assertEquals(normalBeanStore.getDocumentType(), NormalBean.class);
+        assertEquals(lombokBeanStore.getDocumentType(), LombokBean.class);
 
     }
 
     /* ====================================================================== */
 
     @Test
-    public void testAbstracts()
+    public void testNormalBean()
     throws Exception {
 
         final String value = Strings.random(16);
 
-        AbstractBean bean = abstractsStore.create();
+        NormalBean bean = new NormalBean(value);
 
-        assertNull(bean.getValue());
-        bean.setValue(value);
+        assertNull(bean.id());
+        assertNull(bean.lastModifiedAt());
 
-        assertEquals(bean.getValue(), value);
-        assertNull(bean.getLastModifiedAt());
+        bean = normalBeanStore.store(bean);
+        assertNotNull(bean.lastModifiedAt());
+        final Date date1 = bean.lastModifiedAt();
 
-        bean = abstractsStore.store(bean);
-        assertNotNull(bean.getLastModifiedAt());
-        final Date date1 = bean.getLastModifiedAt();
-
-        bean = abstractsStore.find(bean.id());
+        bean = normalBeanStore.find(bean.id());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
-        assertEquals(bean.getLastModifiedAt(), date1);
+        assertEquals(bean.lastModifiedAt(), date1);
 
         Thread.sleep(100); // make sure last modified date changes
 
-        bean = abstractsStore.store(bean);
-        assertNotEquals(bean.getLastModifiedAt(), date1);
-        final Date date2 = bean.getLastModifiedAt();
+        bean = normalBeanStore.store(bean);
+        assertNotEquals(bean.lastModifiedAt(), date1);
+        final Date date2 = bean.lastModifiedAt();
 
-        bean = abstractsStore.find(bean.id());
-        assertEquals(bean.getLastModifiedAt(), date2);
+        bean = normalBeanStore.find(bean.id());
+        assertEquals(bean.lastModifiedAt(), date2);
     }
 
-    public static abstract class AbstractBean extends AbstractDocument {
+    public static class NormalBean extends Document {
 
-        private final Date lastModified;
+        private String value;
 
         @JsonCreator
-        protected AbstractBean(@Id String id,
-                               @LastModified Date modified) {
-            super(id);
-            lastModified = modified;
+        protected NormalBean(@JsonProperty("value") String value) {
+            this.value = value;
         }
 
-        public abstract String getValue();
+        public String getValue() {
+            return value;
+        }
 
-        public abstract void setValue(String value);
-
-        @LastModified
-        @JsonProperty(value="_last_modified_at", required=true) // "force" property to be visible, should be ignored
-        public Date getLastModifiedAt() {
-            return lastModified;
+        public void setValue(String value) {
+            this.value = value;
         }
 
     }
@@ -167,50 +154,42 @@ public class StoreTest extends AbstractTest {
     /* ====================================================================== */
 
     @Test
-    public void testInterfaces()
+    public void testLombokBean()
     throws Exception {
 
         final String value = Strings.random(16);
 
-        InterfaceBean bean = interfacesStore.create();
+        LombokBean bean = new LombokBean();
 
         assertNull(bean.getValue());
         bean.setValue(value);
         assertEquals(bean.getValue(), value);
-        assertNull(bean.getLastModified());
+        assertNull(bean.lastModifiedAt());
 
-        bean = interfacesStore.store(bean);
-        assertNotNull(bean.getLastModified());
-        final Date date1 = bean.getLastModified();
+        bean = lombokBeanStore.store(bean);
+        assertNotNull(bean.lastModifiedAt());
+        final Date date1 = bean.lastModifiedAt();
 
-        bean = interfacesStore.find(bean.id());
+        bean = lombokBeanStore.find(bean.id());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
-        assertEquals(bean.getLastModified(), date1);
+        assertEquals(bean.lastModifiedAt(), date1);
 
         Thread.sleep(100); // make sure last modified date changes
 
-        bean = interfacesStore.store(bean);
-        assertNotEquals(bean.getLastModified(), date1);
-        final Date date2 = bean.getLastModified();
+        bean = lombokBeanStore.store(bean);
+        assertNotEquals(bean.lastModifiedAt(), date1);
+        final Date date2 = bean.lastModifiedAt();
 
-        bean = interfacesStore.find(bean.id());
-        assertEquals(bean.getLastModified(), date2);
+        bean = lombokBeanStore.find(bean.id());
+        assertEquals(bean.lastModifiedAt(), date2);
 
     }
 
-    public static interface InterfaceBean extends Document {
+    public static class LombokBean extends Document {
 
-        public String getValue();
-
-        public void setValue(String value);
-
-        @LastModified
-        @JsonProperty(value="_last_modified_at", required=true) // "force" property to be visible, should be ignored
-        public Date getLastModified();
-
-        @LastModified
-        public void setLastModified(Date date);
+        @Getter @Setter
+        private String value;
 
     }
 }

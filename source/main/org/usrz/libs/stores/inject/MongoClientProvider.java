@@ -15,20 +15,20 @@
  * ========================================================================== */
 package org.usrz.libs.stores.inject;
 
-import org.usrz.libs.configurations.ConfigurableProvider;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.logging.Log;
+import org.usrz.libs.utils.inject.ConfigurableProvider;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
 
-public class MongoClientProvider extends ConfigurableProvider<MongoClient, MongoClientProvider> {
+public class MongoClientProvider extends ConfigurableProvider<MongoClient> {
 
     private final Log log = new Log();
     private final MongoClient client = null;
 
     public MongoClientProvider() {
-        /* Nothing to do ... */
+        super(MongoConfigurations.class);
     }
 
     @Override

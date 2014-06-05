@@ -26,16 +26,17 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
-import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.annotations.Collection;
-import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.annotations.Index;
 import org.usrz.libs.stores.annotations.Index.Key;
 import org.usrz.libs.stores.annotations.Indexed;
@@ -43,7 +44,7 @@ import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -51,37 +52,38 @@ import com.mongodb.DBObject;
 
 public class AnnotationsTest extends AbstractTest {
 
-    private static final String abstractsCollection = "abstracts_test";
-    private static final String interfacesCollection = "interfaces_test";
+    private static final String normalCollection = "normal_bean_test";
+    private static final String lombokCollection = "lombok_bean_test";
 
     @BeforeClass
     public void prepare()
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(MongoBuilder.apply((builder) -> {
-                builder.configure(configurations.strip("mongo"));
-                builder.store(AbstractBean.class);
-                builder.store(InterfaceBean.class);
-        })).injectMembers(this);
+        Guice.createInjector((binder) ->
+                new MongoBuilder(binder)
+                        .configure(configurations.strip("mongo"))
+                        .store(NormalBean.class)
+                        .store(LombokBean.class)
+            ).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)
     public void cleanup()
     throws IOException {
         if (db != null) try {
-            db.getCollection(abstractsCollection).drop();
+            db.getCollection(normalCollection).drop();
         } finally {
-            db.getCollection(interfacesCollection).drop();
+            db.getCollection(lombokCollection).drop();
         }
     }
 
     /* ====================================================================== */
 
     @Inject
-    private Store<AbstractBean> abstractsStore;
+    private Store<NormalBean> normalBeanStore;
     @Inject
-    private Store<InterfaceBean> interfacesStore;
+    private Store<LombokBean> lombokBeanStore;
     @Inject
     private DB db;
 
@@ -127,22 +129,22 @@ public class AnnotationsTest extends AbstractTest {
     /* ====================================================================== */
 
     @Test
-    public void testAbstractsAnnotations()
+    public void testNormalBeanAnnotations()
     throws Exception {
-        assertEquals(abstractsStore.getCollection(), abstractsCollection);
-        testIndexes(abstractsStore);
+        assertEquals(normalBeanStore.getCollection(), normalCollection);
+        testIndexes(normalBeanStore);
     }
 
     @Test
-    public void testInterfacesAnnotations()
+    public void testLombokBeanAnnotations()
     throws Exception {
-        assertEquals(interfacesStore.getCollection(), interfacesCollection);
-        testIndexes(interfacesStore);
+        assertEquals(lombokBeanStore.getCollection(), lombokCollection);
+        testIndexes(lombokBeanStore);
     }
 
     /* ====================================================================== */
 
-    @Collection(abstractsCollection)
+    @Collection(normalCollection)
     @Index(name="type_1",
            options=UNIQUE,
            expiresAfter="1 day",
@@ -151,29 +153,39 @@ public class AnnotationsTest extends AbstractTest {
     @Index(name="type_2",
            options=SPARSE,
            keys={@Key(field="baz", type=HASHED)})
-    public static abstract class AbstractBean extends AbstractDocument {
+    public static class NormalBean extends Document {
 
-        @JsonCreator
-        protected AbstractBean(@Id String id) {
-            super(id);
+        private String value1;
+        private String value2;
+
+        protected NormalBean() {
+            /* Nothing to do */
         }
 
         @Indexed(name="hello", expiresAfter="1 hour")
-        public abstract String getValue1();
+        public String getValue1() {
+            return value1;
+        }
 
-        public abstract void setValue1(String value);
+        public void setValue1(String value) {
+            value1 = value;
+        }
 
-        public abstract String getValue2();
+        public String getValue2() {
+            return value2;
+        }
 
         @Indexed(type=HASHED)
-        public abstract void setValue2(String value);
+        public void setValue2(String value) {
+            value2 = value;
+        }
 
     }
 
     /* ====================================================================== */
 
 
-    @Collection(interfacesCollection)
+    @Collection(lombokCollection)
     @Index(name="type_1",
            options=UNIQUE,
            expiresAfter="1 day",
@@ -182,17 +194,17 @@ public class AnnotationsTest extends AbstractTest {
     @Index(name="type_2",
            options=SPARSE,
            keys={@Key(field="baz", type=HASHED)})
-    public static interface InterfaceBean extends Document {
+    public static class LombokBean extends Document {
 
+        @Setter @Getter
         @Indexed(name="hello", expiresAfter="1 hour")
-        public abstract String getValue1();
+        @JsonProperty("value1")
+        private String value1;
 
-        public abstract void setValue1(String value);
-
-        public abstract String getValue2();
-
+        @Setter @Getter
         @Indexed(type=HASHED)
-        public abstract void setValue2(String value);
+        @JsonProperty("value2")
+        private String value2;
 
     }
 }

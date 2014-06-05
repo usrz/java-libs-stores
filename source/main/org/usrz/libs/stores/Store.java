@@ -17,11 +17,8 @@ package org.usrz.libs.stores;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.function.Consumer;
 
-import org.usrz.libs.stores.annotations.Defaults;
-import org.usrz.libs.stores.annotations.Defaults.Initializer;
-import org.usrz.libs.stores.annotations.Id;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
 /**
  * A {@link Store} stores {@link Document} instances.
@@ -51,50 +48,9 @@ public interface Store<D extends Document> {
     public String getCollection();
 
     /**
-     * Create a new {@link Document} instance.
-     * <p>
-     * If the {@link Document} class is annotated with the {@link Defaults}
-     * annotation, its {@link Consumer}s will be invoked.
-     */
-    public default D create() {
-        return create((initializer) -> {});
-    }
-
-    /**
-     * Create a new {@link Document} instance, using the specified
-     * {@link Consumer} to initialize its defaults.
-     * <p>
-     * If the {@link Document} class is also annotated with the {@link Defaults}
-     * annotation, both {@link Consumer}s will be invoked in order, first the
-     * one from the annotation, then the one specified here.
-     */
-    public D create(Consumer<Initializer> consumer);
-
-    /**
      * Find the {@link Document} associated with the specified {@link Id}.
      */
     public D find(String id);
-
-    /**
-     * Create and store a new {@link Document}.
-     *
-     * @see #create()
-     * @see #store(Document)
-     */
-    default D storeNew() {
-        return store(create());
-    }
-
-    /**
-     * Create and store a new {@link Document} initialized with the specified
-     * {@link Consumer}.
-     *
-     * @see #create(Consumer)
-     * @see #store(Document)
-     */
-    default D storeNew(Consumer<Initializer> consumer) {
-        return store(create(consumer));
-    }
 
     /**
      * Store the specified {@link Document}.

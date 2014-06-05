@@ -18,9 +18,6 @@ package org.usrz.libs.stores;
 import static org.usrz.libs.utils.Check.notNull;
 
 import java.lang.reflect.Type;
-import java.util.function.Consumer;
-
-import org.usrz.libs.stores.annotations.Defaults.Initializer;
 
 /**
  * A <em>Wrapper</em> around another {@link Store}.
@@ -53,11 +50,6 @@ public class AbstractStoreWrapper<D extends Document> implements Store<D> {
     @Override
     public String getCollection() {
         return store.getCollection();
-    }
-
-    @Override
-    public D create(Consumer<Initializer> consumer) {
-        return store.create(consumer);
     }
 
     @Override

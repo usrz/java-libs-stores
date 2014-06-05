@@ -50,13 +50,9 @@ extends InjectingProvider<Store<D>> {
         final BSONObjectMapper mapper = injector.getInstance(BSONObjectMapper.class);
         final DBCollection collection = Injections.getInstance(injector, DBCollection.class, Names.named(this.collection));
 
-        /* Bean class */
-        final TypeLiteral<Class<D>> beanType = (TypeLiteral<Class<D>>) TypeLiteral.get(Types.newParameterizedType(Class.class, type.getType()));
-        final Class<D> beanClass = Injections.getInstance(injector, Key.get(beanType));
-
         /* Create the basic store */
-        Store store = new MongoStore(mapper, injector, collection, type.getType(), beanClass);
-        log.info("Created Store<%s> in collection %s", type, collection.getName());
+        Store store = new MongoStore(mapper, collection, type.getRawType(), type.getType());
+        log.info("Created Store<%s> in collection \"%s\"", type, collection.getName());
 
         /* Caches */
         final TypeLiteral<Cache<String, D>> cacheType = (TypeLiteral<Cache<String, D>>) TypeLiteral.get(Types.newParameterizedType(Cache.class, String.class, type.getType()));

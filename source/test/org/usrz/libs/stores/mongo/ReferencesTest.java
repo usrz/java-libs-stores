@@ -19,22 +19,23 @@ import java.io.IOException;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
-import org.usrz.libs.stores.AbstractDocument;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
-import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.annotations.Reference;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.Strings;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.mongodb.DB;
@@ -51,11 +52,11 @@ public class ReferencesTest extends AbstractTest {
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(MongoBuilder.apply((builder) -> {
-                builder.configure(configurations.strip("mongo"));
-                builder.store(ReferencingBean.class, referencingCollection);
-                builder.store(ReferencedBean.class, referencedCollection);
-        })).injectMembers(this);
+        Guice.createInjector((binder) -> new MongoBuilder(binder)
+                .configure(configurations.strip("mongo"))
+                .store(ReferencingBean.class, referencingCollection)
+                .store(ReferencedBean.class, referencedCollection)
+            ).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)
@@ -85,9 +86,7 @@ public class ReferencesTest extends AbstractTest {
 
         /* Referenced bean comes first */
         final String value = Strings.random(16);
-        final ReferencedBean referencedBean = referencedStore.create();
-        referencedBean.setValue(value);
-        referencedStore.store(referencedBean);
+        final ReferencedBean referencedBean = referencedStore.store(new ReferencedBean().setValue(value));
         final ReferencedBean referencedBean2 = referencedStore.find(referencedBean.id());
 
         assertNotNull(referencedBean2);
@@ -96,10 +95,7 @@ public class ReferencesTest extends AbstractTest {
         assertEquals(referencedBean2.getValue(), referencedBean.getValue());
 
         /* Let's create and store the referencing bean */
-
-        final ReferencingBean referencingBean = referencingStore.create();
-        referencingBean.setReferenced(referencedBean);
-        referencingStore.store(referencingBean);
+        final ReferencingBean referencingBean = referencingStore.store(new ReferencingBean().setReferenced(referencedBean));
         assertNotNull(referencingBean.getReferenced());
 
         /* Verify that in the DB we saved only the reference */
@@ -124,28 +120,24 @@ public class ReferencesTest extends AbstractTest {
 
     /* ====================================================================== */
 
-    public static abstract class ReferencingBean extends AbstractDocument {
+    @Accessors(chain=true)
+    public static class ReferencingBean extends Document {
 
-        @JsonCreator
-        protected ReferencingBean(@Id String id) {
-            super(id);
-        }
+        @Getter
+        @Setter
+        @Reference @JsonProperty("referenced")
+        private ReferencedBean referenced;
 
-        @JsonProperty("referenced") @Reference
-        public abstract ReferencedBean getReferenced();
-
-        @JsonProperty("referenced") @Reference
-        public abstract void setReferenced(ReferencedBean bean);
 
     }
 
     /* ====================================================================== */
 
-    public static interface ReferencedBean extends Document {
+    @Accessors(chain=true)
+    public static class ReferencedBean extends Document {
 
-        public void setValue(String value);
-
-        public String getValue();
+        @Getter @Setter
+        private String value;
 
     }
 

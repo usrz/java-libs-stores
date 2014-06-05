@@ -23,16 +23,18 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.bson.BSONObject;
+import org.usrz.libs.utils.json.BasicPropertyNamingStrategy;
+import org.usrz.libs.utils.json.ConstructorPropertiesIntrospector;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.introspect.AnnotationIntrospectorPair;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.module.SimpleDeserializers;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.fasterxml.jackson.module.guice.GuiceAnnotationIntrospector;
@@ -54,15 +56,26 @@ public class BSONObjectMapper extends ObjectMapper {
         this.injector = injector;
         setInjectableValues(new GuiceInjectableValues(injector));
 
-        final GuiceAnnotationIntrospector guiceIntrospector = injector.getInstance(BSONAnnotationIntrospector.class);
-        final AnnotationIntrospector introspector = getSerializationConfig().getAnnotationIntrospector();
-        setAnnotationIntrospectors(
-            new AnnotationIntrospectorPair(guiceIntrospector, introspector),
-            new AnnotationIntrospectorPair(guiceIntrospector, introspector)
-        );
+        /*
+         * Annotations processing (in order):
+         * - BSON: for @Reference
+         * - ConstructorProperties: for Lombok's @ConstructorProperties
+         * - Guice: for @Inject and similar
+         * - Jackson: for all the rest
+         */
+        final AnnotationIntrospectorPair introspector =
+                new AnnotationIntrospectorPair(
+                        injector.getInstance(BSONAnnotationIntrospector.class),
+                        new AnnotationIntrospectorPair(
+                                new ConstructorPropertiesIntrospector(),
+                                new AnnotationIntrospectorPair(
+                                        new GuiceAnnotationIntrospector(),
+                                        new JacksonAnnotationIntrospector())));
+
+        setAnnotationIntrospector(introspector);
 
         /* Always use underscores in names */
-        setPropertyNamingStrategy(BSONPropertyNamingStrategy.INSTANCE);
+        setPropertyNamingStrategy(BasicPropertyNamingStrategy.INSTANCE);
 
         /*
          * We can't use a module here, as they seem to be shared across all

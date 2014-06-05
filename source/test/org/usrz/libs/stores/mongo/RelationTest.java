@@ -22,6 +22,9 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -51,12 +54,12 @@ public class RelationTest extends AbstractTest {
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(MongoBuilder.apply((builder) -> {
-            builder.configure(configurations.strip("mongo"));
-            builder.store(Foo.class, fooCollection);
-            builder.store(Bar.class, barCollection);
-            builder.relate(Foo.class, Bar.class, relCollection);
-        })).injectMembers(this);
+        Guice.createInjector((binder) -> new MongoBuilder(binder)
+                .configure(configurations.strip("mongo"))
+                .store(Foo.class, fooCollection)
+                .store(Bar.class, barCollection)
+                .relate(Foo.class, Bar.class, relCollection)
+            ).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)
@@ -90,17 +93,17 @@ public class RelationTest extends AbstractTest {
     @Test
     public void testRelation() {
 
-        final Foo foo1 = fooStore.store(fooStore.create()); // unjoined
-        final Foo foo2 = fooStore.store(fooStore.create()); // joined with bar2
-        final Foo foo3 = fooStore.store(fooStore.create()); // joined with bar4, bar5
-        final Foo foo4 = fooStore.store(fooStore.create()); // joined from bar3
-        final Foo foo5 = fooStore.store(fooStore.create()); // joined from bar3
+        final Foo foo1 = fooStore.store(new Foo()); // unjoined
+        final Foo foo2 = fooStore.store(new Foo()); // joined with bar2
+        final Foo foo3 = fooStore.store(new Foo()); // joined with bar4, bar5
+        final Foo foo4 = fooStore.store(new Foo()); // joined from bar3
+        final Foo foo5 = fooStore.store(new Foo()); // joined from bar3
 
-        final Bar bar1 = barStore.store(barStore.create()); // unjoined
-        final Bar bar2 = barStore.store(barStore.create()); // joined with foo2
-        final Bar bar3 = barStore.store(barStore.create()); // joined with foo4, foo5
-        final Bar bar4 = barStore.store(barStore.create()); // joined from foo3
-        final Bar bar5 = barStore.store(barStore.create()); // joined from foo3
+        final Bar bar1 = barStore.store(new Bar()); // unjoined
+        final Bar bar2 = barStore.store(new Bar()); // joined with foo2
+        final Bar bar3 = barStore.store(new Bar()); // joined with foo4, foo5
+        final Bar bar4 = barStore.store(new Bar()); // joined from foo3
+        final Bar bar5 = barStore.store(new Bar()); // joined from foo3
 
         relation.associate(foo2, bar2);
         relation.associate(foo3, bar4);
@@ -179,8 +182,12 @@ public class RelationTest extends AbstractTest {
 
     /* ====================================================================== */
 
-    public static interface Foo extends Document {}
+    public static class Foo extends Document {
+        @Getter @Setter private Integer foo;
+    }
 
-    public static interface Bar extends Document {}
+    public static class Bar extends Document {
+        @Getter @Setter private Integer bar;
+    }
 
 }

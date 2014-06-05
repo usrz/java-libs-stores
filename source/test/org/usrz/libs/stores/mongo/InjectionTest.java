@@ -23,27 +23,26 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
-import org.usrz.libs.stores.AbstractDocument;
+import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
-import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.Strings;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
 import com.mongodb.DB;
-
-
 
 public class InjectionTest extends AbstractTest {
 
@@ -61,14 +60,13 @@ public class InjectionTest extends AbstractTest {
     throws Exception {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        final Injector injector = Guice.createInjector(
-                MongoBuilder.apply((builder) -> builder.configure(configurations.strip("mongo"))),
-                MongoBuilder.apply((builder) -> builder.store(MyBean.class, collection)),
-                (binder) -> {
-                    binder.bind(new TypeLiteral<Map<Object, Object>>(){}).toInstance(MAP);
-                    binder.bind(new TypeLiteral<List<Object>>(){}).toInstance(LIST);
-                    binder.bind(new TypeLiteral<Set<Object>>(){}).toInstance(SET);
-                });
+        final Injector injector = Guice.createInjector((binder) -> {
+                new MongoBuilder(binder).configure(configurations.strip("mongo"))
+                                        .store(MyBean.class, collection);
+                binder.bind(new TypeLiteral<Map<Object, Object>>(){}).toInstance(MAP);
+                binder.bind(new TypeLiteral<List<Object>>(){}).toInstance(LIST);
+                binder.bind(new TypeLiteral<Set<Object>>(){}).toInstance(SET);
+            });
 
         injector.getAllBindings().entrySet().forEach((entry) -> {
             log.info("Binding for key \"%s\"", entry.getKey());
@@ -91,29 +89,31 @@ public class InjectionTest extends AbstractTest {
     throws IOException {
         assertNotNull(store);
 
-        final MyBean bean = store.create();
+        final MyBean bean = store.store(new MyBean());
 
         assertNotNull(bean, "Null bean");
-        assertNotNull(bean.fieldInjection, "Null injection in field");
-        assertNotNull(bean.setterInjection, "Null injection in setter");
-        assertNotNull(bean.constructorInjection, "Null injection in constructor");
+        assertSame(bean.fieldInjection, MAP, "Null injection in field");
+        assertSame(bean.setterInjection, LIST, "Null injection in setter");
+        assertSame(bean.constructorInjection, SET, "Null injection in constructor");
 
     }
 
-    public abstract static class MyBean extends AbstractDocument {
+    @RequiredArgsConstructor
+    public static class MyBean extends Document {
+
+        @Getter
+        private final String value;
 
         @Inject private Map<Object, Object> fieldInjection;
         private final Set<Object> constructorInjection;
         private List<Object> setterInjection;
 
-        @JsonCreator
-        protected MyBean(@Id String id,
-                         @JacksonInject Set<Object> set) {
-            super(id);
-            constructorInjection = set;
+        public MyBean() {
+            value = null;
+            constructorInjection = null;
         }
 
-        @Inject
+        @Inject @JsonIgnore
         public void setList(List<Object> list) {
             setterInjection = list;
         }

@@ -20,20 +20,21 @@ import java.util.Date;
 
 import javax.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
-import org.usrz.libs.stores.AbstractDocument;
+import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
-import org.usrz.libs.stores.annotations.Id;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.Strings;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
@@ -46,10 +47,10 @@ public class LastModifiedTest extends AbstractTest {
     throws IOException {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
 
-        Guice.createInjector(MongoBuilder.apply((builder) -> {
-                builder.configure(configurations.strip("mongo"));
-                builder.store(AbstractBean.class, abstractsCollection);
-        })).injectMembers(this);
+        Guice.createInjector((binder) -> new MongoBuilder(binder)
+                .configure(configurations.strip("mongo"))
+                .store(SimpleBean.class, abstractsCollection)
+            ).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)
@@ -61,7 +62,7 @@ public class LastModifiedTest extends AbstractTest {
     /* ====================================================================== */
 
     @Inject
-    private Store<AbstractBean> abstractsStore;
+    private Store<SimpleBean> abstractsStore;
     @Inject
     private DB db;
 
@@ -73,16 +74,20 @@ public class LastModifiedTest extends AbstractTest {
 
         final String value = Strings.random(16);
 
-        AbstractBean bean = abstractsStore.create();
+        SimpleBean bean = new SimpleBean();
 
         assertNull(bean.getValue());
         bean.setValue(value);
 
         assertEquals(bean.getValue(), value);
         assertNull(bean.lastModifiedAt());
+        assertNull(bean.id());
 
         bean = abstractsStore.store(bean);
+
         assertNotNull(bean.lastModifiedAt());
+        assertNotNull(bean.id());
+
         final Date date1 = bean.lastModifiedAt();
 
         bean = abstractsStore.find(bean.id());
@@ -100,16 +105,9 @@ public class LastModifiedTest extends AbstractTest {
         assertEquals(bean.lastModifiedAt(), date2);
     }
 
-    public static abstract class AbstractBean extends AbstractDocument {
+    public static class SimpleBean extends Document {
 
-        @JsonCreator
-        protected AbstractBean(@Id String id) {
-            super(id);
-        }
-
-        public abstract String getValue();
-
-        public abstract void setValue(String value);
+        @Getter @Setter private String value;
 
     }
 

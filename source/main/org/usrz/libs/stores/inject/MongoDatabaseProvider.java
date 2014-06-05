@@ -15,18 +15,18 @@
  * ========================================================================== */
 package org.usrz.libs.stores.inject;
 
-import org.usrz.libs.configurations.ConfigurableProvider;
 import org.usrz.libs.configurations.Configurations;
+import org.usrz.libs.utils.inject.ConfigurableProvider;
 import org.usrz.libs.utils.inject.Injections;
 
 import com.google.inject.Injector;
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
 
-public class MongoDatabaseProvider extends ConfigurableProvider<DB, MongoDatabaseProvider> {
+public class MongoDatabaseProvider extends ConfigurableProvider<DB> {
 
     public MongoDatabaseProvider() {
-        /* Nothing to do */
+        super(MongoConfigurations.class);
     }
 
     @Override
