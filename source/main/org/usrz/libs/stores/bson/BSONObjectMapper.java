@@ -47,13 +47,10 @@ public class BSONObjectMapper extends ObjectMapper {
 
     public static final Version VERSION = new Version(1, 0, 0, null, "org.usrz.libs", "mongodb");
 
-    private final Injector injector;
-
     @Inject
     private BSONObjectMapper(Injector injector) {
         super(new ObjectMapper());
 
-        this.injector = injector;
         setInjectableValues(new GuiceInjectableValues(injector));
 
         /*
@@ -101,25 +98,20 @@ public class BSONObjectMapper extends ObjectMapper {
 
     /* ====================================================================== */
 
-    private final <T> T inject(T instance) {
-        if (instance != null) injector.injectMembers(instance);
-        return instance;
-    }
-
     public <T> T readValue(BSONObject object, Class<T> type)
     throws JsonProcessingException, IOException {
-        return inject(readBSON(reader(type), object, type));
+        return readBSON(reader(type), object, type);
     }
 
     public <T> T readValueWithView(BSONObject object, Class<T> type, Class<?> view)
     throws JsonProcessingException, IOException {
         Objects.requireNonNull(view, "Null view");
-        return inject(readBSON(readerWithView(view), object, type));
+        return readBSON(readerWithView(view), object, type);
     }
 
     private <T> T readBSON(ObjectReader reader, BSONObject object, Class<T> type)
     throws JsonProcessingException, IOException {
-        return inject(reader.readValue(new BSONParser(this, object), type));
+        return reader.readValue(new BSONParser(this, object), type);
     }
 
     /* ====================================================================== */

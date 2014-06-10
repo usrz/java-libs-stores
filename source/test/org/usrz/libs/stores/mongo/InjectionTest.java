@@ -105,7 +105,7 @@ public class InjectionTest extends AbstractTest {
         private final String value;
 
         @Inject private Map<Object, Object> fieldInjection;
-        private final Set<Object> constructorInjection;
+        @Inject private final Set<Object> constructorInjection;
         private List<Object> setterInjection;
 
         public MyBean() {
