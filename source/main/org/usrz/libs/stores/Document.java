@@ -19,6 +19,8 @@ import static java.lang.Integer.toHexString;
 
 import java.util.Date;
 
+import org.usrz.libs.utils.Check;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
@@ -35,6 +37,11 @@ public abstract class Document {
 
     protected Document() {
         id = null;
+        lastModifiedAt = null;
+    }
+
+    protected Document(String id) {
+        this.id = Check.notNull(id, "Null ID for document");
         lastModifiedAt = null;
     }
 
