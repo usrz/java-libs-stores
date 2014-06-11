@@ -93,7 +93,7 @@ public class BSONAnnotationIntrospector extends NopAnnotationIntrospector {
                     throw new RuntimeJsonMappingException("@Reference annotated method " + a + " must have a single parameter");
                 type = m.getParameter(0).getGenericType();
             } else if (a instanceof AnnotatedParameter) {
-                type = ((AnnotatedMethod) a).getGenericType();
+                type = ((AnnotatedParameter) a).getGenericType();
             } else {
                 type = null;
             }
