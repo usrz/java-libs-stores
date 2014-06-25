@@ -15,6 +15,7 @@
  * ========================================================================== */
 package org.usrz.libs.stores.bson;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,8 +23,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.usrz.libs.logging.Log;
+import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Stores;
-import org.usrz.libs.stores.annotations.Reference;
 
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.databind.introspect.Annotated;
@@ -56,58 +57,78 @@ public class BSONAnnotationIntrospector extends NopAnnotationIntrospector {
 
     @Override
     public Object findSerializer(Annotated a) {
-        if (a.hasAnnotation(Reference.class)) {
-            if (stores == null) throw new IllegalStateException("Stores not available");
 
-            final Type type;
-            if (a instanceof AnnotatedField) {
-                type = ((AnnotatedField) a).getGenericType();
-            } else if (a instanceof AnnotatedMethod) {
-                type = ((AnnotatedMethod) a).getGenericType();
-            } else {
-                type = null;
-            }
-
-            if (type != null) {
-                log.debug("Serializing %s reference for %s", type, a);
-                return serializers.computeIfAbsent(type, (t) -> {
-                    log.debug("Creating new references serializer for type %s", t);
-                    return BSONReferenceSerializer.get(stores.getStore(t));
-                });
-            }
+        final Type type;
+        if (a instanceof AnnotatedField) {
+            type = ((AnnotatedField) a).getGenericType();
+        } else if (a instanceof AnnotatedMethod) {
+            type = ((AnnotatedMethod) a).getGenericType();
+        } else {
+            return null;
         }
+
+        if (isDocument(type)) {
+            if (stores == null) throw new IllegalStateException("Stores not available");
+            log.debug("Serializing %s reference for %s", type, a);
+            return serializers.computeIfAbsent(type, (t) -> {
+                log.debug("Creating new references serializer for type %s", t);
+                return BSONReferenceSerializer.get(stores.getStore(t));
+            });
+        }
+
         return null;
     }
 
     @Override
     public Object findDeserializer(Annotated a) {
-        if (a.hasAnnotation(Reference.class)) {
+
+        final Type type;
+        if (a instanceof AnnotatedField) {
+            type = ((AnnotatedField) a).getGenericType();
+        } else if (a instanceof AnnotatedMethod) {
+            final AnnotatedMethod m = (AnnotatedMethod) a;
+            if (m.getParameterCount() != 1)
+                throw new RuntimeJsonMappingException("@Reference annotated method " + a + " must have a single parameter");
+            type = m.getParameter(0).getGenericType();
+        } else if (a instanceof AnnotatedParameter) {
+            type = ((AnnotatedParameter) a).getGenericType();
+        } else {
+            return null;
+        }
+
+        if (isDocument(type)) {
+            /* Check that we have our stores */
             if (stores == null) throw new IllegalStateException("Stores not available");
 
-            final Type type;
-            if (a instanceof AnnotatedField) {
-                type = ((AnnotatedField) a).getGenericType();
-            } else if (a instanceof AnnotatedMethod) {
-                final AnnotatedMethod m = (AnnotatedMethod) a;
-                if (m.getParameterCount() != 1)
-                    throw new RuntimeJsonMappingException("@Reference annotated method " + a + " must have a single parameter");
-                type = m.getParameter(0).getGenericType();
-            } else if (a instanceof AnnotatedParameter) {
-                type = ((AnnotatedParameter) a).getGenericType();
-            } else {
-                type = null;
-            }
-
-            if (type != null) {
-                log.debug("De-serializing %s reference for %s", type, a);
-                return deserializers.computeIfAbsent(type, (t) -> {
-                    log.debug("Creating new references de-serializer for type %s", t);
-                    return BSONReferenceDeserializer.get(stores.getStore(t));
-                });
-            }
+            log.debug("De-serializing %s reference for %s", type, a);
+            return deserializers.computeIfAbsent(type, (t) -> {
+                log.debug("Creating new references de-serializer for type %s", t);
+                return BSONReferenceDeserializer.get(stores.getStore(t));
+            });
         }
 
         return null;
+    }
+
+    private boolean isDocument(Type type) {
+
+        /* No type? Default deserializer */
+        if (type == null) return false;
+
+        if (type instanceof Class) {
+
+            /* A Document? Serialize reference */
+            if (Document.class.isAssignableFrom((Class<?>) type)) return true;
+
+        } else if (type instanceof ParameterizedType) {
+
+            /* Check the raw type of this parameterized type */
+            return isDocument(((ParameterizedType) type).getRawType());
+
+        }
+
+        /* Type is not a Class or Parameterized Type? Boo! */
+        return false;
     }
 
 }

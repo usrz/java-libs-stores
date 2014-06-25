@@ -30,7 +30,6 @@ import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
-import org.usrz.libs.stores.annotations.Reference;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
@@ -125,7 +124,7 @@ public class ReferencesTest extends AbstractTest {
 
         @Getter
         @Setter
-        @Reference @JsonProperty("referenced")
+        @JsonProperty("referenced")
         private ReferencedBean referenced;
 
 
