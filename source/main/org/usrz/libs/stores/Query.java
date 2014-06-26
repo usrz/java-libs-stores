@@ -15,7 +15,10 @@
  * ========================================================================== */
 package org.usrz.libs.stores;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -27,9 +30,26 @@ import java.util.regex.Pattern;
 public interface Query<D extends Document> {
 
     /**
+     * An enumeration identifying the basic {@link Document} fields
+     * (<em>{@linkplain Document#id()}</em> and
+     * <em>{@linkplain Document#lastModifiedAt() last modified}</em>).
+     */
+    public enum Field {
+        /** The {@linkplain Document#id() id} field. */
+        ID,
+        /** The {@linkplain Document#lastModifiedAt() last modified} field. */
+        LAST_MODIFIED_AT;
+    }
+
+    /**
      * Continue this {@link Query} by <em>and</em>-ing another field search.
      */
     public Operator<D> and(String field);
+
+    /**
+     * Continue this {@link Query} by <em>and</em>-ing another field search.
+     */
+    public Operator<D> and(Field field);
 
     /**
      * Search the {@link Document}s matching this {@link Query}.
@@ -37,7 +57,19 @@ public interface Query<D extends Document> {
     public Cursor<D> documents();
 
     /**
-     * Find the firs {@link Document} matching this {@link Query} or return
+     * Return an unmodifiable {@link List} of all {@link Document}s matching
+     * this {@link Query}.
+     */
+    default List<D> list() {
+        final List<D> list = new ArrayList<>();
+        final Cursor<D> cursor = this.documents();
+        while (cursor.hasNext()) list.add(cursor.next());
+        cursor.close();
+        return Collections.unmodifiableList(list);
+    }
+
+    /**
+     * Find the first {@link Document} matching this {@link Query} or return
      * <b>null</b>
      */
     default D first() {

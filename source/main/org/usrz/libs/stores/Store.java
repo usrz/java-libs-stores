@@ -18,6 +18,8 @@ package org.usrz.libs.stores;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import org.usrz.libs.stores.Query.Field;
+
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
 /**
@@ -76,6 +78,17 @@ public interface Store<D extends Document> {
      * This is equivalent to calling {@code this.query().and(field)}.
      */
     public default Query.Operator<D> query(String field) {
+        return this.query().and(field);
+    }
+
+    /**
+     * Return a {@link Query} instance capable of searching {@link Document}s
+     * stored by this {@link Store} conveniently specifying the base
+     * <em>field</em> to search for.
+     * <p>
+     * This is equivalent to calling {@code this.query().and(field)}.
+     */
+    public default Query.Operator<D> query(Field field) {
         return this.query().and(field);
     }
 

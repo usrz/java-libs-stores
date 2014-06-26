@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Query;
+import org.usrz.libs.utils.Check;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -38,6 +39,15 @@ public abstract class MongoQuery<D extends Document> implements Query<D> {
     @Override
     public Operator and(String key) {
         return new Operator(Objects.requireNonNull(key, "Null key"));
+    }
+
+    @Override
+    public Operator and(Field field) {
+        switch (Check.notNull(field, "Null field")) {
+            case ID: return and(MongoStore.ID);
+            case LAST_MODIFIED_AT: return and(MongoStore.LAST_MODIFIED_AT);
+            default: throw new IllegalArgumentException("Unsupported field " + field);
+        }
     }
 
     /* ====================================================================== */

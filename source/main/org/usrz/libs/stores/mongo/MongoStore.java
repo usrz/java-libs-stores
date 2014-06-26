@@ -46,8 +46,8 @@ import com.mongodb.MongoException;
 
 public class MongoStore<D extends Document> extends AbstractStore<D> {
 
-    private static final String ID = "_id";
-    private static final String LAST_MODIFIED_AT = "_last_modified_at";
+    protected static final String ID = "_id";
+    protected static final String LAST_MODIFIED_AT = "_last_modified_at";
     private static final Log log = new Log();
 
     private final DBCollection collection;
