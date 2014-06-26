@@ -115,6 +115,10 @@ public class ReferencesTest extends AbstractTest {
         assertEquals(referencedBean3.id(), referencedBean.id());
         assertEquals(referencedBean3.getValue(), referencedBean.getValue());
 
+        /* Query */
+        final ReferencingBean referencingBean3 = referencingStore.query("referenced").is(referencedBean3).first();
+        assertNotNull(referencingBean3);
+        assertEquals(referencingBean3.id(), referencingBean.id());
     }
 
     /* ====================================================================== */
