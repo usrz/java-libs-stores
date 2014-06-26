@@ -120,8 +120,18 @@ public interface Query<D extends Document> {
         /** The <em>modulo</em> operator. */
         public Query<D> mod(int divisor, int reminder);
 
+        /** The <em>modulo</em> operator. */
+        default Query<D> mod(int divisor) {
+            return mod(divisor, 0);
+        }
+
         /** Matches any string value according to the given {@link Pattern}. */
         public Query<D> matches(Pattern pattern);
+
+        /** Matches any string value according to the given {@link Pattern}. */
+        default Query<D> matches(String pattern) {
+            return matches(Pattern.compile(pattern));
+        }
 
     }
 }
