@@ -15,8 +15,11 @@
  * ========================================================================== */
 package org.usrz.libs.stores.mongo;
 
+import static org.usrz.libs.stores.Query.Field.LAST_MODIFIED_AT;
+
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -40,7 +43,7 @@ import com.mongodb.DB;
 
 public class LastModifiedTest extends AbstractTest {
 
-    private final String abstractsCollection = Strings.random(16);
+    private final String collection = Strings.random(16);
 
     @BeforeClass
     public void prepare()
@@ -49,27 +52,27 @@ public class LastModifiedTest extends AbstractTest {
 
         Guice.createInjector((binder) -> new MongoBuilder(binder)
                 .configure(configurations.strip("mongo"))
-                .store(SimpleBean.class, abstractsCollection)
+                .store(SimpleBean.class, collection)
             ).injectMembers(this);
     }
 
     @AfterClass(alwaysRun = true)
     public void cleanup()
     throws IOException {
-        if (db != null) db.getCollection(abstractsCollection).drop();
+        if (db != null) db.getCollection(collection).drop();
     }
 
     /* ====================================================================== */
 
     @Inject
-    private Store<SimpleBean> abstractsStore;
+    private Store<SimpleBean> store;
     @Inject
     private DB db;
 
     /* ====================================================================== */
 
     @Test
-    public void testAbstracts()
+    public void testLastModifiedAt()
     throws Exception {
 
         final String value = Strings.random(16);
@@ -83,26 +86,33 @@ public class LastModifiedTest extends AbstractTest {
         assertNull(bean.lastModifiedAt());
         assertNull(bean.id());
 
-        bean = abstractsStore.store(bean);
+        bean = store.store(bean);
 
         assertNotNull(bean.lastModifiedAt());
         assertNotNull(bean.id());
 
         final Date date1 = bean.lastModifiedAt();
 
-        bean = abstractsStore.find(bean.id());
+        bean = store.find(bean.id());
         assertNotNull(bean);
         assertEquals(bean.getValue(), value);
         assertEquals(bean.lastModifiedAt(), date1);
 
         Thread.sleep(100); // make sure last modified date changes
 
-        bean = abstractsStore.store(bean);
+        bean = store.store(bean);
         assertNotEquals(bean.lastModifiedAt(), date1);
         final Date date2 = bean.lastModifiedAt();
 
-        bean = abstractsStore.find(bean.id());
+        bean = store.find(bean.id());
         assertEquals(bean.lastModifiedAt(), date2);
+
+        /* Query */
+        final List<SimpleBean> list = store.query(LAST_MODIFIED_AT).gt(new Date(0)).list();
+        assertNotNull(list, "Null results list");
+        assertEquals(list.size(), 1, "Wrong number of results");
+        assertNotNull(list.get(0), "Null result from query");
+        assertEquals(list.get(0).id(), bean.id(), "Wrong result ID");
     }
 
     public static class SimpleBean extends Document {
