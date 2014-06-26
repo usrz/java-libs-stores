@@ -43,8 +43,13 @@ public class BSONReferenceSerializer<D extends Document> extends JsonSerializer<
                           final JsonGenerator jsonGenerator,
                           final SerializerProvider serializerProvider)
     throws IOException {
-        final DBRef ref = new DBRef(null, store.getCollection(), object.id());
-        jsonGenerator.writeObject(ref);
+        if (object == null) {
+            jsonGenerator.writeNull();
+        } else {
+            final Store<?> store = object.store();
+            final DBRef ref = new DBRef(null, store.getCollection(), object.id());
+            jsonGenerator.writeObject(ref);
+        }
     }
 
     @Override

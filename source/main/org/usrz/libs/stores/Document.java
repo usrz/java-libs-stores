@@ -33,21 +33,30 @@ public abstract class Document {
     @JsonIgnore
     private final String id;
     @JsonIgnore
+    private final Store<?> store;
+    @JsonIgnore
     private final Date lastModifiedAt;
 
     protected Document() {
         id = null;
+        store = null;
         lastModifiedAt = null;
     }
 
     protected Document(String id) {
         this.id = Check.notNull(id, "Null ID for document");
+        store = null;
         lastModifiedAt = null;
     }
 
     @JsonIgnore
     public final String id() {
         return id;
+    }
+
+    @JsonIgnore
+    public final Store<?> store() {
+        return store;
     }
 
     @JsonIgnore

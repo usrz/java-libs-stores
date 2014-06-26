@@ -24,6 +24,7 @@ import org.usrz.libs.stores.Query;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBRef;
 import com.mongodb.QueryOperators;
 
 public abstract class MongoQuery<D extends Document> implements Query<D> {
@@ -51,44 +52,44 @@ public abstract class MongoQuery<D extends Document> implements Query<D> {
 
         @Override
         public MongoQuery<D> is(Object value) {
-            query.append(field, value);
+            query.append(field, map(value));
             return MongoQuery.this;
         }
 
         @Override
         public MongoQuery<D> isNot(Object value) {
-            query.append(field, new BasicDBObject(QueryOperators.NE, value));
+            query.append(field, new BasicDBObject(QueryOperators.NE, map(value)));
             return MongoQuery.this;
         }
 
         @Override
         public MongoQuery<D> gt(Object value) {
-            query.append(field, new BasicDBObject(QueryOperators.GT, value));
+            query.append(field, new BasicDBObject(QueryOperators.GT, map(value)));
             return MongoQuery.this;
         }
 
         @Override
         public MongoQuery<D> gte(Object value) {
-            query.append(field, new BasicDBObject(QueryOperators.GTE, value));
+            query.append(field, new BasicDBObject(QueryOperators.GTE, map(value)));
             return MongoQuery.this;
         }
 
         @Override
         public MongoQuery<D> lt(Object value) {
-            query.append(field, new BasicDBObject(QueryOperators.LT, value));
+            query.append(field, new BasicDBObject(QueryOperators.LT, map(value)));
             return MongoQuery.this;
         }
 
         @Override
         public MongoQuery<D> lte(Object value) {
-            query.append(field, new BasicDBObject(QueryOperators.LTE, value));
+            query.append(field, new BasicDBObject(QueryOperators.LTE, map(value)));
             return MongoQuery.this;
         }
 
         @Override
         public MongoQuery<D> in(Collection<?> collection) {
             final BasicDBList list = new BasicDBList();
-            list.addAll(collection);
+            collection.forEach((value) -> list.add(map(value)));
             query.append(field, new BasicDBObject(QueryOperators.IN, list));
             return MongoQuery.this;
         }
@@ -96,7 +97,7 @@ public abstract class MongoQuery<D extends Document> implements Query<D> {
         @Override
         public MongoQuery<D> notIn(Collection<?> collection) {
             final BasicDBList list = new BasicDBList();
-            list.addAll(collection);
+            collection.forEach((value) -> list.add(map(value)));
             query.append(field, new BasicDBObject(QueryOperators.NIN, list));
             return MongoQuery.this;
         }
@@ -115,5 +116,19 @@ public abstract class MongoQuery<D extends Document> implements Query<D> {
             query.append(field, pattern);
             return MongoQuery.this;
         }
+
+        /* ================================================================== */
+
+        private Object map(Object object) {
+            if (object == null) return null;
+            if (object instanceof Document) {
+                final Document document = (Document) object;
+                final String id = document.id();
+                final String collection = document.store().getCollection();
+                return new DBRef(null, collection, id);
+            }
+            return object;
+        }
+
     }
 }

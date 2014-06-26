@@ -56,6 +56,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
     private final Type type;
 
     private final Field idField;
+    private final Field storeField;
     private final Field lastModifiedAtField;
 
     public MongoStore(BSONObjectMapper mapper,
@@ -96,6 +97,8 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         try {
             this.idField = Document.class.getDeclaredField("id");
             this.idField.setAccessible(true);
+            this.storeField = Document.class.getDeclaredField("store");
+            this.storeField.setAccessible(true);
             this.lastModifiedAtField = Document.class.getDeclaredField("lastModifiedAt");
             this.lastModifiedAtField.setAccessible(true);
         } catch (NoSuchFieldException exception) {
@@ -165,6 +168,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
             @Override
             public Cursor<D> documents() {
+                log.debug("Querying %s in collection \"%s\"", query, collection);
                 return new MongoCursor<D>(collection.find(query), (o) -> convert(o));
             }
         };
@@ -199,6 +203,7 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
         /* Forcedly inject ID and LAST MODIFIED (hackzone, be sneaky) */
         try {
             this.idField.set(instance, id);
+            this.storeField.set(instance, this);
             this.lastModifiedAtField.set(instance, lastModified);
             return instance;
         } catch (IllegalAccessException exception) {
