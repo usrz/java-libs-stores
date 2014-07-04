@@ -25,10 +25,12 @@ import javax.inject.Singleton;
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Stores;
+import org.usrz.libs.stores.annotations.BsonIgnore;
 
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.fasterxml.jackson.databind.introspect.Annotated;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.fasterxml.jackson.databind.introspect.NopAnnotationIntrospector;
@@ -53,6 +55,12 @@ public class BSONAnnotationIntrospector extends NopAnnotationIntrospector {
         } finally {
             this.stores = stores;
         }
+    }
+
+    @Override
+    public boolean hasIgnoreMarker(AnnotatedMember m) {
+        final BsonIgnore annotation = m.getAnnotation(BsonIgnore.class);
+        return (annotation != null && annotation.value());
     }
 
     @Override

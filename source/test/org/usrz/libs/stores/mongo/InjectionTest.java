@@ -33,12 +33,12 @@ import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.configurations.JsonConfigurations;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
+import org.usrz.libs.stores.annotations.BsonIgnore;
 import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.Strings;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.TypeLiteral;
@@ -113,7 +113,7 @@ public class InjectionTest extends AbstractTest {
             constructorInjection = null;
         }
 
-        @Inject @JsonIgnore
+        @Inject @BsonIgnore
         public void setList(List<Object> list) {
             setterInjection = list;
         }

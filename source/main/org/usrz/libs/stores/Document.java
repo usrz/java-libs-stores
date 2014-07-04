@@ -19,9 +19,8 @@ import static java.lang.Integer.toHexString;
 
 import java.util.Date;
 
+import org.usrz.libs.stores.annotations.BsonIgnore;
 import org.usrz.libs.utils.Check;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * An abstract implementation of the {@link Document} interface.
@@ -30,11 +29,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  */
 public abstract class Document {
 
-    @JsonIgnore
+    @BsonIgnore
     private final String id;
-    @JsonIgnore
+    @BsonIgnore
     private final Store<?> store;
-    @JsonIgnore
+    @BsonIgnore
     private final Date lastModifiedAt;
 
     protected Document() {
@@ -49,17 +48,17 @@ public abstract class Document {
         lastModifiedAt = null;
     }
 
-    @JsonIgnore
+    @BsonIgnore
     public final String id() {
         return id;
     }
 
-    @JsonIgnore
+    @BsonIgnore
     public final Store<?> store() {
         return store;
     }
 
-    @JsonIgnore
+    @BsonIgnore
     public final Date lastModifiedAt() {
         return lastModifiedAt;
     }
