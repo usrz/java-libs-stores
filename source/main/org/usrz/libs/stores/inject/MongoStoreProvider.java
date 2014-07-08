@@ -21,10 +21,10 @@ import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.stores.mongo.MongoStore;
-import org.usrz.libs.utils.caches.Cache;
 import org.usrz.libs.utils.inject.InjectingProvider;
 import org.usrz.libs.utils.inject.Injections;
 
+import com.google.common.cache.Cache;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;

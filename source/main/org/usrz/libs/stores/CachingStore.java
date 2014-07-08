@@ -16,9 +16,13 @@
 package org.usrz.libs.stores;
 
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import org.usrz.libs.logging.Log;
-import org.usrz.libs.utils.caches.Cache;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheLoader.InvalidCacheLoadException;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 /**
  * A {@link Store} capable of <em>caching</em> documents in the wrapped
@@ -39,15 +43,22 @@ public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
 
     @Override
     public D find(String id) {
-        final D cached = cache.fetch(id);
-        if (cached != null) return cached;
-
-        final D document = super.find(id);
-        if (document != null) {
-            log.debug("Caching document %s on fetch", document.id());
-            cache.store(document.id(), document);
+        Throwable cause;
+        try {
+            return cache.get(id, () -> {
+                final D document = super.find(id);
+                if (document != null) log.debug("Caching document %s on find", document.id());
+                return document;
+            });
+        } catch (ExecutionException | UncheckedExecutionException exception) {
+            cause = exception.getCause();
+            if (cause == null) cause = exception;
+        } catch (InvalidCacheLoadException exception) {
+            return null;
         }
-        return document;
+
+        if (cause instanceof RuntimeException) throw (RuntimeException) cause;
+        throw new UncheckedExecutionException(cause.getClass().getSimpleName() + " caught fetching document \"" + id + "\"", cause);
     }
 
     @Override
@@ -55,7 +66,7 @@ public class CachingStore<D extends Document> extends AbstractStoreWrapper<D> {
         final D document = super.store(object);
         if (document != null) {
             log.debug("Caching document %s on store", document.id());
-            cache.store(document.id(), document);
+            cache.put(document.id(), document);
         }
         return document;
     }

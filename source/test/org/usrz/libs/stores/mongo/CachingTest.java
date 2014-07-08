@@ -32,9 +32,8 @@ import org.usrz.libs.stores.inject.MongoBuilder;
 import org.usrz.libs.testing.AbstractTest;
 import org.usrz.libs.testing.IO;
 import org.usrz.libs.utils.Strings;
-import org.usrz.libs.utils.caches.Cache;
-import org.usrz.libs.utils.caches.SimpleCache;
 
+import com.google.common.cache.Cache;
 import com.google.inject.Guice;
 import com.mongodb.DB;
 
@@ -51,13 +50,12 @@ public class CachingTest extends AbstractTest {
     public void initialize()
     throws Exception {
         final Configurations configurations = new JsonConfigurations(IO.resource("test.js"));
-        final Cache<String, MyBean> cache = new SimpleCache<>();
 
         Guice.createInjector((binder) ->
                 new MongoBuilder(binder)
                         .configure(configurations.strip("mongo"))
                         .store(MyBean.class, collection)
-                        .withCache(cache)
+                        .withCache("maximumSize=1000")
             ).injectMembers(this);
     }
 
@@ -77,14 +75,14 @@ public class CachingTest extends AbstractTest {
 
         final MyBean bean = store.store(new MyBean());
 
-        assertNotNull(cache.fetch(bean.id()), "Not cached on store");
+        assertNotNull(cache.getIfPresent(bean.id()), "Not cached on store");
 
         cache.invalidate(bean.id());
-        assertNull(cache.fetch(bean.id()), "Cache not invalidated");
+        assertNull(cache.getIfPresent(bean.id()), "Cache not invalidated");
 
         final MyBean bean2 = store.find(bean.id());
         assertNotNull(bean2, "Stored bean not found");
-        assertNotNull(cache.fetch(bean2.id()), "Not cached on find");
+        assertNotNull(cache.getIfPresent(bean2.id()), "Not cached on find");
 
     }
 

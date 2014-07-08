@@ -27,8 +27,9 @@ import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
 import org.usrz.libs.stores.annotations.Index;
 import org.usrz.libs.stores.mongo.MongoIndex;
-import org.usrz.libs.utils.caches.Cache;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.inject.Binder;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
@@ -94,6 +95,10 @@ implements MongoBindingBuilder {
     public MongoStoreBuilder<D> withIndex(Consumer<MongoIndexBuilder> consumer) {
         consumer.accept(createIndex());
         return this;
+    }
+
+    public MongoStoreBuilder<D> withCache(String cacheSpec) {
+        return this.withCache(CacheBuilder.from(cacheSpec).build());
     }
 
     public MongoStoreBuilder<D> withCache(Cache<String, D> cache) {
