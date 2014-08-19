@@ -19,6 +19,7 @@ import org.usrz.libs.logging.Log;
 import org.usrz.libs.stores.CachingStore;
 import org.usrz.libs.stores.Document;
 import org.usrz.libs.stores.Store;
+import org.usrz.libs.stores.ValidatingStore;
 import org.usrz.libs.stores.bson.BSONObjectMapper;
 import org.usrz.libs.stores.mongo.MongoStore;
 import org.usrz.libs.utils.inject.InjectingProvider;
@@ -38,10 +39,11 @@ extends InjectingProvider<Store<D>> {
     private final Log log = new Log();
     private final TypeLiteral<D> type;
     private final String collection;
+    boolean validation = false;
 
     public MongoStoreProvider(TypeLiteral<D> type, String collection) {
         this.collection = collection;
-        this.type = type;;
+        this.type = type;
     }
 
     @Override
@@ -62,7 +64,8 @@ extends InjectingProvider<Store<D>> {
             log.info("Enabling cache on Store<%s> with cache %s", type, cache);
         }
 
-        return store;
+        /* Validation or plan storage? */
+        return validation ? new ValidatingStore(store) : store;
     }
 
 }

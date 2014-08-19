@@ -39,8 +39,9 @@ import com.mongodb.DBCollection;
 public class MongoStoreBuilder<D extends Document>
 implements MongoBindingBuilder {
 
-    private final MongoBuilder builder;
     private final MongoCollectionProvider collection;
+    private final MongoStoreProvider<D> provider;
+    private final MongoBuilder builder;
     private final TypeLiteral<D> type;
     private final Binder binder;
 
@@ -58,7 +59,7 @@ implements MongoBindingBuilder {
         /* Bind our Store<D> provider */
         @SuppressWarnings("unchecked")
         final TypeLiteral<Store<D>> storeType = (TypeLiteral<Store<D>>) TypeLiteral.get(Types.newParameterizedType(Store.class, type.getType()));
-        binder.bind(storeType).toProvider(new MongoStoreProvider<D>(type, collection));
+        binder.bind(storeType).toProvider(provider = new MongoStoreProvider<D>(type, collection));
 
         /* Process @Index annotations */
         processIndexAnnotations(discoverIndexAnnotations(type.getRawType()));
@@ -84,6 +85,17 @@ implements MongoBindingBuilder {
         for (Index index: annotations) {
             this.withIndex((builder) -> ((MongoIndex) builder).withAnnotation(index));
         }
+    }
+
+    /* ====================================================================== */
+
+    public MongoStoreBuilder<D> withValidation() {
+        return this.withValidation(true);
+    }
+
+    public MongoStoreBuilder<D> withValidation(boolean validation) {
+        provider.validation = validation;
+        return this;
     }
 
     /* ====================================================================== */
