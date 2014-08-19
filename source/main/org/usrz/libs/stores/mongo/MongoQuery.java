@@ -134,7 +134,7 @@ public abstract class MongoQuery<D extends Document> implements Query<D> {
             if (object instanceof Document) {
                 final Document document = (Document) object;
                 final String id = document.id();
-                final String collection = document.store().getCollection();
+                final String collection = document.collection();
                 return new DBRef(null, collection, id);
             }
             return object;

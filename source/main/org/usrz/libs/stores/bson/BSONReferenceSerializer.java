@@ -46,8 +46,7 @@ public class BSONReferenceSerializer<D extends Document> extends JsonSerializer<
         if (object == null) {
             jsonGenerator.writeNull();
         } else {
-            final Store<?> store = object.store();
-            final DBRef ref = new DBRef(null, store.getCollection(), object.id());
+            final DBRef ref = new DBRef(null, object.collection(), object.id());
             jsonGenerator.writeObject(ref);
         }
     }

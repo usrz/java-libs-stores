@@ -54,8 +54,8 @@ public abstract class Document {
     }
 
     @BsonIgnore
-    public final Store<?> store() {
-        return store;
+    public final String collection() {
+        return store.getCollection();
     }
 
     @BsonIgnore
