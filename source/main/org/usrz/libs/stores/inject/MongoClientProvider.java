@@ -15,12 +15,20 @@
  * ========================================================================== */
 package org.usrz.libs.stores.inject;
 
+import static com.mongodb.MongoCredential.createMongoCRCredential;
+
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.usrz.libs.configurations.Configurations;
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.utils.inject.ConfigurableProvider;
 
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
 
 public class MongoClientProvider extends ConfigurableProvider<MongoClient> {
 
@@ -31,18 +39,59 @@ public class MongoClientProvider extends ConfigurableProvider<MongoClient> {
         super(MongoConfigurations.class);
     }
 
+    private ServerAddress getServerAddress(Configurations configurations) {
+        final String host = configurations.get("host", "localhost");
+        final int port = configurations.get("port", 27017);
+
+        try {
+            return new ServerAddress(host, port);
+        } catch (UnknownHostException exception) {
+            throw new MongoException("Unknown host " + host + ":" + port, exception);
+        }
+    }
+
+    private MongoCredential getMongoCredential(Configurations configurations) {
+        final String username = configurations.requireString("username");
+        final String password = configurations.requireString("password");
+        final String authDb = configurations.get("auth_db", "admin");
+
+        return createMongoCRCredential(username, authDb, password.toCharArray());
+    }
+
     @Override
     protected MongoClient get(Configurations configurations) {
         if (client != null) return client;
 
-        final String host = configurations.get("host", "localhost");
-        final int port = configurations.get("port", 27017);
+        /* Start processing our list of server addresses */
+        final List<ServerAddress> servers = new ArrayList<>();
+        configurations.group("servers").forEach((key, server) ->
+            servers.add(getServerAddress(server))
+        );
 
-        log.info("Creating new MongoDB client for %s:%d", host, port);
-        try {
-            return new MongoClient(host, port);
-        } catch (Exception exception) {
-            throw new MongoException("Unable to create MongoDB client", exception);
+        /* Add the optional host/port */
+        if (!servers.isEmpty() && (configurations.containsKey("host") || configurations.containsKey("port"))) {
+            servers.add(getServerAddress(configurations));
         }
+
+        if (servers.isEmpty()) {
+            servers.add(getServerAddress(configurations));
+        }
+
+        /* Start processing our list of credentials */
+        final List<MongoCredential> credentials = new ArrayList<>();
+        configurations.group("credentials").forEach((key, credential) ->
+            credentials.add(getMongoCredential(credential))
+        );
+
+        /* Anything on the root configuration node? */
+        if (configurations.containsKey("username") || configurations.containsKey("password")) {
+            credentials.add(getMongoCredential(configurations));
+        }
+
+        log.info("Creating new MongoDB client");
+        servers.forEach((address) -> log.info("- MongoDB server: %s, port: %d", address.getHost(), address.getPort()));
+        credentials.forEach((credential) -> log.info("- MongoDB user name: %s, source: %s", credential.getUserName(), credential.getSource()));
+
+        return new MongoClient(servers, credentials);
     }
 }
