@@ -89,6 +89,10 @@ public class AnnotationsTest extends AbstractTest {
 
     /* ====================================================================== */
 
+    private void assertIndex(List<DBObject> indexes, BasicDBObject index) {
+        assertTrue(indexes.contains(index), "Index not found: " + index);
+    }
+
     private void testIndexes(Store<?> store) {
         final String collection = store.getCollection();
         final List<DBObject> indexes = db.getCollection(collection).getIndexInfo();
@@ -96,34 +100,34 @@ public class AnnotationsTest extends AbstractTest {
         for (DBObject index: indexes) log.info("Found index %s", index);
 
         assertEquals(indexes.size(), 5);
-        assertTrue(indexes.contains(new BasicDBObject("v", 1)
-                                              .append("name", "_id_")
-                                              .append("ns", "test." + collection)
-                                              .append("key", new BasicDBObject("_id", 1))));
+        assertIndex(indexes, new BasicDBObject("v", 1)
+                                    .append("name", "_id_")
+                                    .append("ns", "test." + collection)
+                                    .append("key", new BasicDBObject("_id", 1)));
 
-        assertTrue(indexes.contains(new BasicDBObject("v", 1)
-                                              .append("name", "type_1")
-                                              .append("unique", true)
-                                              .append("expireAfterSeconds", 86400)
-                                              .append("ns", "test." + collection)
-                                              .append("key", new BasicDBObject("foo", 1).append("bar", -1))));
+        assertIndex(indexes, new BasicDBObject("v", 1)
+                                    .append("name", "type_1")
+                                    .append("unique", true)
+                                    .append("expireAfterSeconds", 86400)
+                                    .append("ns", "test." + collection)
+                                    .append("key", new BasicDBObject("foo", 1).append("bar", -1)));
 
-        assertTrue(indexes.contains(new BasicDBObject("v", 1)
-                                              .append("name", "type_2")
-                                              .append("sparse", true)
-                                              .append("ns", "test." + collection)
-                                              .append("key", new BasicDBObject("baz", "hashed"))));
+        assertIndex(indexes, new BasicDBObject("v", 1)
+                                    .append("name", "type_2")
+                                    .append("sparse", true)
+                                    .append("ns", "test." + collection)
+                                    .append("key", new BasicDBObject("baz", "hashed")));
 
-        assertTrue(indexes.contains(new BasicDBObject("v", 1)
-                                              .append("name", "hello")
-                                              .append("expireAfterSeconds", 3600)
-                                              .append("ns", "test." + collection)
-                                              .append("key", new BasicDBObject("value_1", 1))));
+        assertIndex(indexes, new BasicDBObject("v", 1)
+                                    .append("name", "hello")
+                                    .append("expireAfterSeconds", 3600)
+                                    .append("ns", "test." + collection)
+                                    .append("key", new BasicDBObject("value_1", 1)));
 
-        assertTrue(indexes.contains(new BasicDBObject("v", 1)
-                                              .append("name", "value_2_hashed")
-                                              .append("ns", "test." + collection)
-                                              .append("key", new BasicDBObject("value_2", "hashed"))));
+        assertIndex(indexes, new BasicDBObject("v", 1)
+                                    .append("name", "value_2_hashed")
+                                    .append("ns", "test." + collection)
+                                    .append("key", new BasicDBObject("value_2", "hashed")));
     }
 
     /* ====================================================================== */
@@ -198,12 +202,12 @@ public class AnnotationsTest extends AbstractTest {
 
         @Setter @Getter
         @Indexed(name="hello", expiresAfter="1 hour")
-        @JsonProperty("value1")
+        @JsonProperty("value_1")
         private String value1;
 
         @Setter @Getter
         @Indexed(type=HASHED)
-        @JsonProperty("value2")
+        @JsonProperty("value_2")
         private String value2;
 
     }
