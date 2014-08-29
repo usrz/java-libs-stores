@@ -38,9 +38,9 @@ extends AbstractRelation<L, R> {
         this.storeR = storeR;
         this.collection = collection;
 
-        collection.ensureIndex(new BasicDBObject(L, 1), new BasicDBObject("unique", false).append("sparse", false));
-        collection.ensureIndex(new BasicDBObject(R, 1), new BasicDBObject("unique", false).append("sparse", false));
-        collection.ensureIndex(new BasicDBObject(L, 1).append(R, 1), new BasicDBObject("unique", true).append("sparse", false));
+        collection.createIndex(new BasicDBObject(L, 1), new BasicDBObject("unique", false).append("sparse", false));
+        collection.createIndex(new BasicDBObject(R, 1), new BasicDBObject("unique", false).append("sparse", false));
+        collection.createIndex(new BasicDBObject(L, 1).append(R, 1), new BasicDBObject("unique", true).append("sparse", false));
 
     }
 

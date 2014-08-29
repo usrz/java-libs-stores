@@ -109,7 +109,7 @@ public class MongoIndex implements MongoIndexBuilder {
         } else {
             log.info("Ensuring index %s with options %s on collection \"%s\"", index, options, collection.getName());
         }
-        collection.ensureIndex(index, options);
+        collection.createIndex(index, options);
     }
 
 }
