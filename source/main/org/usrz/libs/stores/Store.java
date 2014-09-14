@@ -92,4 +92,26 @@ public interface Store<D extends Document> {
         return this.query().and(field);
     }
 
+    /**
+     * Return a {@link Query} instance capable of searching {@link Document}s
+     * stored by this {@link Store} conveniently specifying the base
+     * <em>field</em> to search for.
+     * <p>
+     * This is equivalent to calling {@code this.query().and(field).is(value)}.
+     */
+    public default Query<D> query(String field, Object value) {
+        return this.query().and(field).is(value);
+    }
+
+    /**
+     * Return a {@link Query} instance capable of searching {@link Document}s
+     * stored by this {@link Store} conveniently specifying the base
+     * <em>field</em> to search for.
+     * <p>
+     * This is equivalent to calling {@code this.query().and(field).is(value)}.
+     */
+    public default Query<D> query(Field field, Object value) {
+        return this.query().and(field).is(value);
+    }
+
 }
