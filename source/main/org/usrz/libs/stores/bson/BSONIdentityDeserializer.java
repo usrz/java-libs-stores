@@ -32,10 +32,7 @@ public class BSONIdentityDeserializer<T> extends JsonDeserializer<T> {
 
     @SuppressWarnings("unchecked")
     public static <T> BSONIdentityDeserializer<T> create(Class<T> type) {
-        if (INSTANCES.containsKey(type)) return (BSONIdentityDeserializer<T>) INSTANCES.get(type);
-        final BSONIdentityDeserializer<T> serializer = new BSONIdentityDeserializer<T>(type);
-        final BSONIdentityDeserializer<?> instance = INSTANCES.putIfAbsent(type, serializer);
-        return instance == null ? serializer : (BSONIdentityDeserializer<T>) instance;
+        return (BSONIdentityDeserializer<T>) INSTANCES.computeIfAbsent(type, (t) -> new BSONIdentityDeserializer<T>(type));
     }
 
     public static <T> void register(SimpleDeserializers deserializers, Class<T> type) {

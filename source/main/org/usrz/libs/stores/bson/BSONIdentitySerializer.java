@@ -30,10 +30,7 @@ public class BSONIdentitySerializer<T> extends JsonSerializer<T> {
 
     @SuppressWarnings("unchecked")
     public static <T> BSONIdentitySerializer<T> create(Class<T> type) {
-        if (INSTANCES.containsKey(type)) return (BSONIdentitySerializer<T>) INSTANCES.get(type);
-        final BSONIdentitySerializer<T> serializer = new BSONIdentitySerializer<T>(type);
-        final BSONIdentitySerializer<?> instance = INSTANCES.putIfAbsent(type, serializer);
-        return instance == null ? serializer : (BSONIdentitySerializer<T>) instance;
+        return (BSONIdentitySerializer<T>) INSTANCES.computeIfAbsent(type, (t) -> new BSONIdentitySerializer<T>(type));
     }
 
     public static <T> void register(SimpleSerializers serializers, Class<T> type) {
