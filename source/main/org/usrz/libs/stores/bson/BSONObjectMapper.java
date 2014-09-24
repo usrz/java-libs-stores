@@ -111,7 +111,10 @@ public class BSONObjectMapper extends ObjectMapper {
 
     private <T> T readBSON(ObjectReader reader, BSONObject object, Class<T> type)
     throws JsonProcessingException, IOException {
-        return reader.readValue(new BSONParser(this, object), type);
+        final BSONParser parser = new BSONParser(this, object);
+        final T value = reader.readValue(parser, type);
+        parser.close();
+        return value;
     }
 
     /* ====================================================================== */
@@ -132,9 +135,10 @@ public class BSONObjectMapper extends ObjectMapper {
         final BSONGenerator generator = new BSONGenerator(this);
         writer.writeValue(generator, object);
         final BSONObject bson = generator.getOutputTarget();
+        generator.close();
+
         if (bson instanceof BasicDBObject) return (BasicDBObject) bson;
         final Map<?, ?> map = bson instanceof Map ? (Map<?, ?>) bson : bson.toMap();
         return new BasicDBObject(map);
     }
-
 }
