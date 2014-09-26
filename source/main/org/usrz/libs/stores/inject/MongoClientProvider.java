@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.usrz.libs.configurations.Configurations;
+import org.usrz.libs.configurations.Password;
 import org.usrz.libs.logging.Log;
 import org.usrz.libs.utils.inject.ConfigurableProvider;
 
@@ -52,10 +53,14 @@ public class MongoClientProvider extends ConfigurableProvider<MongoClient> {
 
     private MongoCredential getMongoCredential(Configurations configurations) {
         final String username = configurations.requireString("username");
-        final String password = configurations.requireString("password");
+        final Password password = configurations.requirePassword("password");
         final String authDb = configurations.get("auth_db", "admin");
 
-        return createMongoCRCredential(username, authDb, password.toCharArray());
+        try {
+            return createMongoCRCredential(username, authDb, password.get());
+        } finally {
+            password.close();
+        }
     }
 
     @Override
