@@ -164,10 +164,11 @@ public class MongoStore<D extends Document> extends AbstractStore<D> {
 
     @Override
     public Query<D> query() {
-        return new MongoQuery<D>(new BasicDBObject()) {
+        return new MongoQuery<D>() {
 
             @Override
             public Cursor<D> documents() {
+                final DBObject query = getQueryObject();
                 log.debug("Querying %s in collection \"%s\"", query, collection);
                 return new MongoCursor<D>(collection.find(query), (o) -> convert(o));
             }

@@ -51,6 +51,12 @@ public interface Query<D extends Document> {
      */
     public Operator<D> and(Field field);
 
+    default Query<D> orderBy(String field) {
+        return this.orderBy(field, true);
+    }
+
+    public Query<D> orderBy(String field, boolean ascending);
+
     /**
      * Search the {@link Document}s matching this {@link Query}.
      */

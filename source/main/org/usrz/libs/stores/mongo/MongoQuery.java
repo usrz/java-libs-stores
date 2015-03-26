@@ -25,15 +25,18 @@ import org.usrz.libs.utils.Check;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import com.mongodb.QueryOperators;
 
 public abstract class MongoQuery<D extends Document> implements Query<D> {
 
-    protected final BasicDBObject query;
+    private final BasicDBObject query;
+    private final BasicDBObject orderBy;
 
-    protected MongoQuery(BasicDBObject query) {
-        this.query = Objects.requireNonNull(query, "Null DBObject");
+    protected MongoQuery() {
+        this.query = new BasicDBObject();
+        this.orderBy = new BasicDBObject();
     }
 
     @Override
@@ -48,6 +51,20 @@ public abstract class MongoQuery<D extends Document> implements Query<D> {
             case LAST_MODIFIED_AT: return and(MongoStore.LAST_MODIFIED_AT);
             default: throw new IllegalArgumentException("Unsupported field " + field);
         }
+    }
+
+    @Override
+    public MongoQuery<D>orderBy(String field, boolean ascending) {
+        this.orderBy.clear();
+        this.orderBy.put(field, ascending ? 1 : -1);
+        return this;
+    }
+
+    /* ====================================================================== */
+
+    protected DBObject getQueryObject() {
+        if (orderBy.isEmpty()) return query;
+        return new BasicDBObject("$query", query).append("$orderby", orderBy);
     }
 
     /* ====================================================================== */

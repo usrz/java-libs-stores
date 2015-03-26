@@ -215,6 +215,70 @@ public class QueriesTest extends AbstractTest {
         assertTrue(list.contains(bean2));
     }
 
+    @Test
+    public void testSortAscendingString() {
+        List<SimpleBean> list = store.query().orderBy("named").list();
+        assertEquals(list.size(), 10);
+        assertEquals(list.get(0), bean8); // eight
+        assertEquals(list.get(1), bean5); // five
+        assertEquals(list.get(2), bean4); // four
+        assertEquals(list.get(3), bean9); // nine
+        assertEquals(list.get(4), bean1); // one
+        assertEquals(list.get(5), bean7); // seven
+        assertEquals(list.get(6), bean6); // six
+        assertEquals(list.get(7), bean3); // three
+        assertEquals(list.get(8), bean2); // two
+        assertEquals(list.get(9), bean0); // zero
+    }
+
+    @Test
+    public void testSortAscendingNumber() {
+        List<SimpleBean> list = store.query().orderBy("value").list();
+        assertEquals(list.size(), 10);
+        assertEquals(list.get(0), bean0);
+        assertEquals(list.get(1), bean1);
+        assertEquals(list.get(2), bean2);
+        assertEquals(list.get(3), bean3);
+        assertEquals(list.get(4), bean4);
+        assertEquals(list.get(5), bean5);
+        assertEquals(list.get(6), bean6);
+        assertEquals(list.get(7), bean7);
+        assertEquals(list.get(8), bean8);
+        assertEquals(list.get(9), bean9);
+    }
+
+    @Test
+    public void testSortDescendingString() {
+        List<SimpleBean> list = store.query().orderBy("named", false).list();
+        assertEquals(list.size(), 10);
+        assertEquals(list.get(0), bean0); // zero
+        assertEquals(list.get(1), bean2); // two
+        assertEquals(list.get(2), bean3); // three
+        assertEquals(list.get(3), bean6); // six
+        assertEquals(list.get(4), bean7); // seven
+        assertEquals(list.get(5), bean1); // one
+        assertEquals(list.get(6), bean9); // nine
+        assertEquals(list.get(7), bean4); // four
+        assertEquals(list.get(8), bean5); // five
+        assertEquals(list.get(9), bean8); // eight
+    }
+
+    @Test
+    public void testSortDescendingNumber() {
+        List<SimpleBean> list = store.query().orderBy("value", false).list();
+        assertEquals(list.size(), 10);
+        assertEquals(list.get(0), bean9);
+        assertEquals(list.get(1), bean8);
+        assertEquals(list.get(2), bean7);
+        assertEquals(list.get(3), bean6);
+        assertEquals(list.get(4), bean5);
+        assertEquals(list.get(5), bean4);
+        assertEquals(list.get(6), bean3);
+        assertEquals(list.get(7), bean2);
+        assertEquals(list.get(8), bean1);
+        assertEquals(list.get(9), bean0);
+    }
+
     @RequiredArgsConstructor
     public static class SimpleBean extends Document {
 
@@ -228,6 +292,11 @@ public class QueriesTest extends AbstractTest {
             } else {
                 return false;
             }
+        }
+
+        @Override
+        public String toString() {
+            return "SimpleBean[" + value + "->" + named + "]";
         }
     }
 
