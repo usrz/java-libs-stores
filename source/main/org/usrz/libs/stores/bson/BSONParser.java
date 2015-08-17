@@ -311,4 +311,9 @@ public class BSONParser extends JsonParser {
         return BigDecimal.valueOf(getDoubleValue());
     }
 
+    @Override
+    public boolean hasTokenId(int id) {
+        return getCurrentTokenId() == id;
+    }
+
 }
